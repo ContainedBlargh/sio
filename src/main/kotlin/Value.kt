@@ -8,12 +8,29 @@ sealed class Value {
             return when {
                 token.toIntOrNull() != null -> IValue(token.toInt())
                 token.toFloatOrNull() != null -> FValue(token.toFloat())
-                token.startsWith("\"") && token.endsWith("\"") -> SValue(token.replace("\"", ""))
+                token.startsWith("\"") && token.endsWith("\"") ->
+                    SValue(token
+                        .replace("\"", "")
+                        .replace("\\n", "\n")
+                        .replace("\\t", "\t")
+                        .replace("\\r", "\r")
+                    )
                 registers.containsKey(token) -> RegisterRef(registers[token]!!)
                 else -> throw NoWhenBranchMatchedException("Unknown token: '$token'")
             }
         }
 
+        fun setDigit(number: Int, i: Int, digit: Int): Int {
+            val numberStr = number.toString()
+            val mostSignificant = digit.toString().firstOrNull() ?: 0
+            return (numberStr.substring(0, i) + mostSignificant + numberStr.substring(i + 1)).toInt()
+        }
+
+        fun String.replaceAt(i: Int, str: String): String {
+            val left = if (i > 1) str.substring(0, i - 1) else ""
+            val right = if (i < str.length - 1) str.substring(i + 1) else ""
+            return left + str + right
+        }
     }
 
     abstract fun toInt(): Int
@@ -51,21 +68,13 @@ sealed class Value {
             return lVal * rVal
         }
 
-        override fun not(): Value {
-            return flatten().not()
-        }
+        override fun not() = flatten().not()
 
-        override fun dgt(i: Int): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dgt(i: Int) = flatten().dgt(i)
 
-        override fun dst(i: Int, v: Value): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dst(i: Int, v: Value) = flatten().dst(i, v)
 
-        override fun compareTo(value: Value): Int {
-            TODO("Not yet implemented")
-        }
+        override fun compareTo(value: Value) = flatten().compareTo(value)
     }
 
     data class SValue(val s: String) : Value() {
@@ -114,13 +123,9 @@ sealed class Value {
             return SValue("${s[i]}")
         }
 
-        override fun dst(i: Int, v: Value): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.toString()))
 
-        override fun compareTo(value: Value): Int {
-            TODO("Not yet implemented")
-        }
+        override fun compareTo(value: Value): Int = s.compareTo(value.toString())
     }
 
     data class FValue(val f: Float) : Value() {
@@ -135,17 +140,12 @@ sealed class Value {
             return IValue(if (f.toInt() != 0) 0 else 100)
         }
 
-        override fun dgt(i: Int): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dgt(i: Int): Value = IValue(f.toInt().toString()[i].digitToInt())
 
-        override fun dst(i: Int, v: Value): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dst(i: Int, v: Value): Value =
+            IValue(setDigit(toInt(), i, v.toInt()))
 
-        override fun compareTo(value: Value): Int {
-            TODO("Not yet implemented")
-        }
+        override fun compareTo(value: Value): Int = f.compareTo(value.toFloat())
     }
 
     data class IValue(val i: Int) : Value() {
@@ -160,16 +160,10 @@ sealed class Value {
             return IValue(if (i == 0) 100 else 0)
         }
 
-        override fun dgt(i: Int): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dgt(p: Int): Value = IValue(i.toString()[p].digitToInt())
 
-        override fun dst(i: Int, v: Value): Value {
-            TODO("Not yet implemented")
-        }
+        override fun dst(p: Int, v: Value): Value = IValue(setDigit(i, p, v.toInt()))
 
-        override fun compareTo(value: Value): Int {
-            TODO("Not yet implemented")
-        }
+        override fun compareTo(value: Value): Int = i.compareTo(value.toInt())
     }
 }

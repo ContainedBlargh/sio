@@ -1,0 +1,16 @@
+@mov 1000 clk
+@mov 100 acc
+@ mov "\n" stdout
+
+loop:
+    sub 1
+    mov "\r..." stdout
+
+tgt acc 0
++ jmp loop
+- jmp finalize
+
+finalize:
+    mov "\n" stdout
+    mov "I just jumped\n" stdout
+    end

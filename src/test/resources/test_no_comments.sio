@@ -1,0 +1,8 @@
+@mov 25 acc
+mov acc stdout 
+sub 1
+mov "\n" stdout
+tlt acc 1
++ mov "done\n" stdout
++ end 
+slp 1

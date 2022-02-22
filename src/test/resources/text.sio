@@ -1,0 +1,25 @@
+$dat
+$c
+
+@mov 3 c
+mov acc c
+
+mov "spongebob" acc
+
+teq c 3
++ mov "squarepants" dat
++ mul dat
+teq c 2
++ mov 2 dat
++ mul dat
+teq c 1
++ mov "squarepants" dat
++ add " "
++ add dat
++ mov acc stdout
++ end
+
+mov acc stdout
+mov "\n" stdout
+mov c acc
+sub 1

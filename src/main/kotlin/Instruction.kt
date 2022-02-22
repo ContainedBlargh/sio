@@ -1,77 +1,41 @@
-import Value.*
+import Value.RegisterRef
+import kotlinx.coroutines.delay
 
 sealed class Instruction {
-    companion object {
-        fun parse(
-            registers: Map<String, AnyRegister>,
-            jmpLabels: Set<String>,
-            tokenIterator: Iterator<String>,
-            lineIterator: Iterator<String>
-        ): Instruction? {
-            if (!tokenIterator.hasNext()) {
-                return null
-            }
-            val first = tokenIterator.next().lowercase()
-            val inst = when (first) {
-                "nop" -> Nop
-                "mov" -> {
-                    val first = tokenIterator.next() ?: throw IllegalStateException("mov expected a first operand")
-                    val second = tokenIterator.next() ?: throw IllegalStateException("mov expected a second operand")
-                    val lVal = Value.parse(first, registers)
-                    val rVal = Value.parse(second, registers)
-                    if (rVal !is RegisterRef) {
-                        throw IllegalStateException("mov right operand must be a registerRef!")
-                    }
-                    return Mov(lVal, rVal)
-                }
-                "jmp" -> {
-                    val label = tokenIterator.next() ?: throw IllegalStateException("jmp must have a label!")
-                    if (label !in jmpLabels) {
-                        throw IllegalStateException("jmp requires a label!")
-                    }
-                    return Jmp(label)
-                }
-                "sub" -> {
-                    val first = tokenIterator.next()
-                    val value = Value.parse(first, registers)
-                    return Sub(value)
-                }
-                else -> throw IllegalArgumentException("Unknown instruction: '$first'")
-            }
-            if (tokenIterator.hasNext()) {
-                throw IllegalStateException("No more tokens expected!")
-            }
-            return inst
-        }
-    }
 
-    abstract fun modify(node: Node)
+
+    abstract suspend fun modify(node: Node)
 
     object Nop : Instruction() {
-        override fun modify(node: Node) {
+        override suspend fun modify(node: Node) {
             //It's nop, it doesn't do anything.
         }
     }
 
-    data class Mov(val take: Value, val to: RegisterRef): Instruction() {
-        override fun modify(node: Node) {
+    object End: Instruction() {
+        override suspend fun modify(node: Node) {
+            node.stop()
+        }
+    }
+
+    data class Mov(val take: Value, val to: RegisterRef) : Instruction() {
+        override suspend fun modify(node: Node) {
             to.register.put(take.flatten())
         }
     }
 
     data class Jmp(val label: String) : Instruction() {
-        override fun modify(node: Node) {
+        override suspend fun modify(node: Node) {
             node.jumpTo(label)
         }
     }
 
-    data class Slp(private val duration: Value) : Instruction() {
-        override fun modify(node: Node) {
-            node.sleep(duration.toInt())
-        }
+    data class Slp(val duration: Value) : Instruction() {
+        override suspend fun modify(node: Node) = node.sleep(duration.toInt())
+
     }
 
-    data class Slx(private val xRegisterRef: Value) : Instruction() {
+    data class Slx(val xRegisterRef: Value) : Instruction() {
         private val xBusRegister: AnyRegister.XBusRegister
 
         init {
@@ -85,32 +49,32 @@ sealed class Instruction {
             xBusRegister = register
         }
 
-        override fun modify(node: Node) {
+        override suspend fun modify(node: Node) {
             xBusRegister.channel.sleep()
         }
     }
 
-    abstract class AccInstruction: Instruction() {
+    abstract class AccInstruction : Instruction() {
         abstract fun updateAcc(acc: AnyRegister.Register)
-        override fun modify(node: Node) {
+        override suspend fun modify(node: Node) {
             val acc = node.getRegister("acc")
             updateAcc(acc as AnyRegister.Register)
         }
     }
 
-    data class Add(private val operand: Value) : AccInstruction() {
+    data class Add(val operand: Value) : AccInstruction() {
         override fun updateAcc(acc: AnyRegister.Register) {
             acc.put(acc.get() + operand)
         }
     }
 
-    data class Sub(private val operand: Value): AccInstruction() {
+    data class Sub(val operand: Value) : AccInstruction() {
         override fun updateAcc(acc: AnyRegister.Register) {
             acc.put(acc.get() - operand)
         }
     }
 
-    data class Mul(private val operand: Value): AccInstruction() {
+    data class Mul(val operand: Value) : AccInstruction() {
         override fun updateAcc(acc: AnyRegister.Register) {
             acc.put(acc.get() * operand)
         }
@@ -122,9 +86,72 @@ sealed class Instruction {
         }
     }
 
-    class Dgt: AccInstruction() {
+    class Dgt(val operand: Value) : AccInstruction() {
         override fun updateAcc(acc: AnyRegister.Register) {
-            TODO("Not yet implemented")
+            acc.put(acc.get().dgt(operand.toInt()))
+        }
+    }
+
+    class Dst(val left: Value, val right: Value) : AccInstruction() {
+        override fun updateAcc(acc: AnyRegister.Register) {
+            acc.put(acc.get().dst(left.toInt(), right))
+        }
+    }
+
+    abstract class TestInstruction(
+        val positive: List<Instruction>,
+        val negative: List<Instruction>
+    ) : Instruction() {
+        abstract fun test(): Boolean
+        override suspend fun modify(node: Node) {
+            if (test()) {
+                positive.forEach { it.modify(node) }
+            } else {
+                negative.forEach { it.modify(node) }
+            }
+        }
+    }
+
+    class Teq(
+        val left: Value,
+        val right: Value,
+        positive: List<Instruction>,
+        negative: List<Instruction>
+    ) : TestInstruction(positive, negative) {
+        override fun test(): Boolean = left.compareTo(right) == 0
+    }
+
+    class Tgt(
+        val left: Value,
+        val right: Value,
+        positive: List<Instruction>,
+        negative: List<Instruction>,
+    ) : TestInstruction(positive, negative) {
+        override fun test(): Boolean = left > right
+    }
+
+    class Tlt(
+        val left: Value,
+        val right: Value,
+        positive: List<Instruction>,
+        negative: List<Instruction>
+    ) : TestInstruction(positive, negative) {
+        override fun test(): Boolean = left < right
+    }
+
+    class Tcp(
+        val left: Value,
+        val right: Value,
+        val positive: List<Instruction>,
+        val negative: List<Instruction>
+    ) : Instruction() {
+        override suspend fun modify(node: Node) {
+            if (left > right) {
+                positive.forEach { it.modify(node) }
+            }
+            if (left < right) {
+                negative.forEach { it.modify(node) }
+            }
         }
     }
 }

@@ -1,0 +1,4 @@
+mov 5 stdin
+mov stdin acc
+mov acc stdout
+end

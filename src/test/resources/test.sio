@@ -3,14 +3,12 @@ $x0 # What's this?
 
 #run this once
 @mov 100 acc
-sub 1
-str acc # What's that?
-# - It's a new instruction, str converts whatever you have into an ascii string.
-
-mov acc stdout # What's that????
+mov acc stdout # stdout? What's that?
 # - stdout is a register that you can use to write to stdout :)
 # What does it write?
 # - whatever you give it. It can be string or it can be binary data. It's just like stdout.
+
+sub 1
 
 mov "\n" stdout # A string literal?
 # - exactly!
@@ -19,5 +17,4 @@ tlt acc 1
 + mov "done\n" stdout
 + end # I can guess what this instruction does...
 # - yeah.
-
 slp 1

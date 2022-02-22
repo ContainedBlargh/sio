@@ -23,7 +23,7 @@ sealed class AnyRegister() {
         }
     }
 
-    data class ClockRegister(override val identifier: String = "clc") : AnyRegister() {
+    data class ClockRegister(override val identifier: String = "clk") : AnyRegister() {
         private var clockSpeed = 500
         override fun put(value: Value) {
             max(min(value.toInt(), 1), 1000)
@@ -58,8 +58,11 @@ sealed class AnyRegister() {
     }
 
     data class Stdout(override val identifier: String = "stdout") : WriteRegistry() {
+        private val writer = System.out.bufferedWriter()
+
         override fun write(s: String) {
-            print(s)
+            writer.write(s)
+            writer.flush()
         }
     }
 
