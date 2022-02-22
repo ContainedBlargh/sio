@@ -1,0 +1,1 @@
+class XBusDesynchronized: Exception("XBus channel was desynchronized!")

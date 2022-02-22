@@ -1,0 +1,1 @@
+class UndefinedRegister(name: String): Exception("Undefined register '$name'!")
