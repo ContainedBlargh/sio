@@ -3,11 +3,67 @@ import java.util.*
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
 
-sealed class Register() {
+sealed class Register {
     abstract val identifier: String
     abstract fun put(value: Value)
     abstract fun get(): Value
+
+    data class RandomRegister(override val identifier: String = "rng") : Register() {
+        enum class RandomType {
+            INT,
+            FLOAT,
+            STRING
+        }
+
+        var type = RandomType.INT
+        var random: Random? = null
+        var seed = 0
+
+        private fun disturbinglyRandom(): Random {
+            random = Random(System.currentTimeMillis())
+            val i = random!!.nextInt(0, 3)
+            type = RandomType.values()[i]
+            return random!!
+        }
+
+        private fun seedRandom(value: Value): Pair<Random, RandomType> {
+            return when (value) {
+                is Value.NullValue -> disturbinglyRandom() to type
+                is Value.RegisterRef -> seedRandom(value.flatten())
+                is Value.SValue -> {
+                    seed = value.toInt()
+                    Random(System.currentTimeMillis().countOneBits()) to RandomType.STRING
+                }
+                is Value.FValue -> Random((value.f * 9999).toInt()) to RandomType.FLOAT
+                is Value.IValue -> Random(value.i) to RandomType.INT
+            }
+        }
+
+        override fun put(value: Value) {
+            val (r, t) = seedRandom(value)
+            random = r
+            type = t
+        }
+
+        override fun get(): Value {
+            if (random == null) {
+                random = disturbinglyRandom()
+            }
+            return when (type) {
+                RandomType.INT -> Value.IValue(random!!.nextInt(0, 999))
+                RandomType.FLOAT -> Value.FValue(random!!.nextFloat())
+                RandomType.STRING -> {
+                    val stringBuilder = StringBuilder()
+                    for (i in 0 until seed.absoluteValue) {
+                        stringBuilder.append(random!!.nextInt(32, 127).toChar())
+                    }
+                    Value.SValue(stringBuilder.toString())
+                }
+            }
+        }
+    }
 
     data class NullRegister(override val identifier: String = "null") : Register() {
         override fun toString() = "null"

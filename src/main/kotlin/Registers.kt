@@ -8,5 +8,6 @@ object Registers {
     private val stdout = Register.Stdout()
     private val stdin = Register.Stdin()
     private val stderr = Register.StdErr()
-    fun getDefault(): List<Register> = listOf(nil, clk, acc, stdout, stdin, stderr)
+    private val rng = Register.RandomRegister()
+    fun getDefault(): List<Register> = listOf(nil, clk, acc, stdout, stdin, stderr, rng)
 }

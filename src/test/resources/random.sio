@@ -1,0 +1,7 @@
+# Try writing 5 chars to stdout.
+mov rng stdout
+mov "\n" stdout
+mov "5" rng
+mov rng stdout
+mov "\n" stdout
+end

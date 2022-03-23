@@ -36,4 +36,10 @@ class NodeTests {
         val node = Parser.parseFromSource(getResourceFilePath("text.sio"))
         runBlocking { node.start().join() }
     }
+
+    @Test
+    fun `Test random node`() {
+        val node = Parser.parseFromSource(getResourceFilePath("random.sio"))
+        runBlocking { node.start().join() }
+    }
 }
