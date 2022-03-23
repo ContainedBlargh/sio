@@ -5,7 +5,9 @@ import java.nio.file.Paths
 
 object Parser {
 
-    class ParserException(message: String) : Exception(message)
+    private val stack = mutableListOf<String>()
+
+    class ParserException(message: String) : Exception(message + "\n" + stack.joinToString("\n"))
 
     fun <T> Iterator<T>.tryNext(): T? {
         if (hasNext()) {
@@ -16,7 +18,7 @@ object Parser {
     }
 
     private fun parseMonOp(
-        registers: Map<String, AnyRegister>,
+        registers: Map<String, Register>,
         tokenIterator: Iterator<String>,
         ctor: (Value) -> Instruction
     ): Instruction {
@@ -26,7 +28,7 @@ object Parser {
     }
 
     private fun parseBinOp(
-        registers: Map<String, AnyRegister>,
+        registers: Map<String, Register>,
         tokenIterator: Iterator<String>,
         ctor: (Value, Value) -> Instruction
     ): Instruction {
@@ -38,7 +40,7 @@ object Parser {
     }
 
     private fun splitIntoTokens(line: String): List<String> {
-        val noComments = line.split("#").first().trim()
+        val noComments = line.split("#", ";").first().trim()
         val noAts = noComments.replace("@", "")
         return tokenExp.findAll(noAts).map { it.groupValues[0] }.toList()
     }
@@ -47,7 +49,7 @@ object Parser {
     val minusExp = Regex("^\\-\\s*(.*)$")
 
     private fun parseTestOp(
-        registers: Map<String, AnyRegister>,
+        registers: Map<String, Register>,
         jmpLabels: Set<String>,
         tokenIterator: Iterator<String>,
         remainingLines: List<String>,
@@ -77,15 +79,22 @@ object Parser {
             posFirst -> 0 to pos.size
             else -> neg.size to 0
         }
-        val posLines = remainingLines.drop(posOffset).takeWhile { it.trim().startsWith("+") }
+        val posLines = remainingLines
+            .drop(posOffset)
+            .takeWhile { it.trim().startsWith("+") }
+            .map { it.replace("+", "", false).trimStart() }
         val posInstructions = pos.foldIndexed(emptyList<Instruction>()) { i, acc, line ->
-            val tokens = splitIntoTokens(line.replace(plusExp){ it.groupValues[1] })
-            val instruction = parseInstruction(registers, jmpLabels, tokens.iterator(), posLines.drop(i + 1))
+            val tokens = splitIntoTokens(line.replace(plusExp) { it.groupValues[1] })
+            val remainingPosLines = posLines.drop(i + 1)
+            val instruction = parseInstruction(registers, jmpLabels, tokens.iterator(), remainingPosLines)
             acc + listOfNotNull(instruction)
         }
-        val negLines = remainingLines.drop(negOffset).takeWhile { it.trim().startsWith("-") }
+        val negLines = remainingLines
+            .drop(negOffset)
+            .takeWhile { it.trim().startsWith("-") }
+            .map { it.replace("-", "", false).trimStart() }
         val negInstructions = neg.foldIndexed(emptyList<Instruction>()) { i, acc, line ->
-            val tokens = splitIntoTokens(line.replace(minusExp){ it.groupValues[1] })
+            val tokens = splitIntoTokens(line.replace(minusExp) { it.groupValues[1] })
             val instruction = parseInstruction(registers, jmpLabels, tokens.iterator(), negLines.drop(i + 1))
             acc + listOfNotNull(instruction)
         }
@@ -93,7 +102,7 @@ object Parser {
     }
 
     private fun parseInstruction(
-        registers: Map<String, AnyRegister>,
+        registers: Map<String, Register>,
         jmpLabels: Set<String>,
         tokenIterator: Iterator<String>,
         remainingLines: List<String>
@@ -123,25 +132,26 @@ object Parser {
                 registers,
                 tokenIterator
             ) {
-                if (it is RegisterRef && it.register is AnyRegister.XBusRegister)
+                if (it is RegisterRef && it.register is Register.XBusRegister)
                     Slx(it)
                 else
-                    throw IllegalStateException("slx must wait for an XBus register.")
+                    throw ParserException("slx must wait for an XBus register.")
             }
             "add" -> parseMonOp(registers, tokenIterator) { Add(it) }
             "sub" -> parseMonOp(registers, tokenIterator) { Sub(it) }
             "mul" -> parseMonOp(registers, tokenIterator) { Mul(it) }
             "not" -> Not()
+            "cst" -> parseMonOp(registers, tokenIterator) { Cst(it) }
             "dgt" -> parseMonOp(registers, tokenIterator) { Dgt(it) }
             "dst" -> parseBinOp(registers, tokenIterator) { l, r -> Dst(l, r) }
             "teq" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Teq(l, r, p, n) }
             "tgt" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Tgt(l, r, p, n) }
             "tlt" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Tlt(l, r, p, n) }
             "tcp" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Tcp(l, r, p, n) }
-            else -> throw IllegalArgumentException("Unknown instruction: '$first'")
+            else -> throw ParserException("Unknown instruction: '$first'")
         }
         if (tokenIterator.hasNext()) {
-            throw IllegalStateException("No more tokens expected!")
+            throw ParserException("No more tokens expected!")
         }
         return inst
     }
@@ -151,7 +161,9 @@ object Parser {
     private val tokenExp = Regex("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
     fun parseFromSource(sourcePath: String): Node {
-        val lines = Files.readAllLines(Paths.get(sourcePath)).map { it.trimEnd() }
+        val lines = Files
+            .readAllLines(Paths.get(sourcePath))
+            .map { it.trimEnd() }
         val labels = lines.filter { it.matches(labelExp) }.map {
             val match = labelExp.find(it)!!
             match.groupValues[1]
@@ -164,11 +176,11 @@ object Parser {
         loop@ while (lineIterator.hasNext()) {
             var line = lineIterator.next().trim()
             i++
-            println("[$i]: $line")
+            stack.add("[$i]: $line")
             if (line.matches(registerExp)) {
                 val match = registerExp.find(line)!!
                 val name = match.groupValues[1]
-                registers.put(name, AnyRegister.Register(name))
+                registers.put(name, Register.PlainRegister(name))
                 if (match.groupValues.size == 1) {
                     continue@loop
                 }
@@ -178,7 +190,7 @@ object Parser {
                 val match = labelExp.find(line)!!
                 val label = match.groupValues[1]
                 if (line in jmpTable.keys) {
-                    throw IllegalStateException("parser error, label '$label' already defined!\n[$i]:$line")
+                    throw ParserException("parser error, label '$label' already defined!\n[$i]:$line")
                 }
                 jmpTable[label] = instructionList.size
                 if (match.groupValues.size == 1) {
@@ -186,7 +198,7 @@ object Parser {
                 }
                 line = match.groupValues[2]
             }
-            val noComments = line.split("#").first().trim()
+            val noComments = line.split("#", ";").first().trim()
             val runOnce = noComments.startsWith("@")
             val noAts = noComments.replace("@", "")
             val tokens = tokenExp.findAll(noAts).map { it.groupValues[0] }.toList()
@@ -197,17 +209,13 @@ object Parser {
             val instruction = parseInstruction(registers, labels, tokenIterator, lines.drop(i))
                 ?: continue@loop
             if (instruction is TestInstruction) {
-                instruction.positive.drop(1).forEach { lineIterator.next(); }
-                instruction.negative.drop(1).forEach { lineIterator.next(); }
-            }
-            if (instruction is Teq) {
-                instruction.positive.drop(1).forEach { lineIterator.next(); }
-                instruction.negative.drop(1).forEach { lineIterator.next(); }
+                instruction.positive.forEach { stack.add("[+]: ${lineIterator.next()}"); i++ }
+                instruction.negative.forEach { stack.add("[-]: ${lineIterator.next()}"); i++ }
             }
             instructionList.add(runOnce to instruction)
         }
         if (jmpTable.any { it.value >= instructionList.size }) {
-            throw IllegalStateException("cannot have jump label as final line!")
+            throw ParserException("Cannot have jump label as final line!")
         }
         return Node(instructionList, registers, jmpTable)
     }

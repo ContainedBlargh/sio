@@ -4,15 +4,23 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
-sealed class AnyRegister() {
+sealed class Register() {
     abstract val identifier: String
     abstract fun put(value: Value)
     abstract fun get(): Value
 
-    data class Register(
+    data class NullRegister(override val identifier: String = "null") : Register() {
+        override fun toString() = "null"
+        override fun put(value: Value) {}
+        override fun get(): Value {
+            return Value.NullValue()
+        }
+    }
+
+    data class PlainRegister(
         override val identifier: String,
         private var value: Value = Value.IValue(0)
-    ) : AnyRegister() {
+    ) : Register() {
         override fun toString() = "Register(identifier=$identifier, value=$value)"
         override fun put(value: Value) {
             this.value = value
@@ -23,9 +31,11 @@ sealed class AnyRegister() {
         }
     }
 
-    data class ClockRegister(override val identifier: String = "clk") : AnyRegister() {
+    data class ClockRegister(override val identifier: String = "clk") : Register() {
         private var clockSpeed = 500
+        var active = true
         override fun put(value: Value) {
+            active = value.toInt() != -1
             max(min(value.toInt(), 1), 1000)
         }
 
@@ -35,7 +45,7 @@ sealed class AnyRegister() {
     data class XBusRegister(
         override val identifier: String,
         val channel: XBusChannel
-    ) : AnyRegister() {
+    ) : Register() {
         override fun put(value: Value) {
             channel.send(value)
         }
@@ -43,7 +53,7 @@ sealed class AnyRegister() {
         override fun get(): Value = channel.receive()
     }
 
-    abstract class WriteRegistry : AnyRegister() {
+    abstract class WriteRegistry : Register() {
         private val tapeMemory = LinkedList<String>()
         abstract fun write(s: String)
         override fun put(value: Value) {
@@ -66,14 +76,20 @@ sealed class AnyRegister() {
         }
     }
 
-    data class Stdin(override val identifier: String = "stdin") : AnyRegister() {
+    data class Stdin(override val identifier: String = "stdin") : Register() {
         private val reader = System.`in`.reader()
-        private var outBuffer = ""
+        private var outBuffer = StringBuilder()
 
         private fun prepare(i: Int) {
-            val buffer = CharBuffer.allocate(i)
-            reader.read(buffer)
-            outBuffer += buffer.toString()
+            try {
+                val buffer = CharBuffer.allocate(i)
+                val read = reader.read(buffer)
+                for (b in (0 until read).reversed()) {
+                    outBuffer.append(buffer.get(b))
+                }
+            } catch (_: Exception) {
+                outBuffer.append(0b0)
+            }
         }
 
         override fun put(value: Value) {
@@ -82,7 +98,9 @@ sealed class AnyRegister() {
         }
 
         override fun get(): Value {
-            return Value.SValue(outBuffer.slice(outBuffer.indices))
+            val out = Value.SValue(outBuffer.reversed().toString())
+            outBuffer.clear()
+            return out
         }
     }
 

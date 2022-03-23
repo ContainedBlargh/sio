@@ -4,16 +4,17 @@ import kotlin.math.min
 
 sealed class Value {
     companion object {
-        fun parse(token: String, registers: Map<String, AnyRegister>): Value {
+        fun parse(token: String, registers: Map<String, Register>): Value {
             return when {
                 token.toIntOrNull() != null -> IValue(token.toInt())
                 token.toFloatOrNull() != null -> FValue(token.toFloat())
                 token.startsWith("\"") && token.endsWith("\"") ->
-                    SValue(token
-                        .replace("\"", "")
-                        .replace("\\n", "\n")
-                        .replace("\\t", "\t")
-                        .replace("\\r", "\r")
+                    SValue(
+                        token
+                            .replace("\"", "")
+                            .replace("\\n", "\n")
+                            .replace("\\t", "\t")
+                            .replace("\\r", "\r")
                     )
                 registers.containsKey(token) -> RegisterRef(registers[token]!!)
                 else -> throw NoWhenBranchMatchedException("Unknown token: '$token'")
@@ -44,7 +45,36 @@ sealed class Value {
     abstract fun dst(i: Int, v: Value): Value
     abstract operator fun compareTo(value: Value): Int
 
-    data class RegisterRef(val register: AnyRegister) : Value() {
+    class NullValue() : Value() {
+        override fun toInt(): Int = 0
+
+        override fun toFloat(): Float = Float.NaN
+
+        override fun flatten(): Value = this
+
+        override fun plus(value: Value): Value = this
+
+        override fun minus(value: Value): Value = this
+
+        override fun times(value: Value): Value = this
+
+        override fun not(): Value = this
+
+        override fun dgt(i: Int): Value = this
+
+        override fun dst(i: Int, v: Value): Value = this
+
+        override fun compareTo(value: Value): Int {
+            return when (value) {
+                is RegisterRef -> compareTo(value.flatten())
+                is NullValue -> 0
+                is SValue -> if (value.s.trim().isBlank()) 0 else -1
+                else -> -1
+            }
+        }
+    }
+
+    data class RegisterRef(val register: Register) : Value() {
         fun lookup() = register.get()
         override fun toString() = register.get().toString()
         override fun toInt() = register.get().toInt()
@@ -79,7 +109,7 @@ sealed class Value {
 
     data class SValue(val s: String) : Value() {
         override fun toString() = s
-        override fun toInt() = s.toIntOrNull() ?: 0
+        override fun toInt() = s.trim().toIntOrNull() ?: 0
         override fun toFloat() = s.toFloatOrNull() ?: 0f
         override fun flatten() = this
         override fun plus(value: Value): Value {
@@ -125,7 +155,10 @@ sealed class Value {
 
         override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.toString()))
 
-        override fun compareTo(value: Value): Int = s.compareTo(value.toString())
+        override fun compareTo(value: Value): Int = when(value) {
+            is NullValue -> -1 * value.compareTo(this)
+            else -> s.compareTo(value.toString())
+        }
     }
 
     data class FValue(val f: Float) : Value() {

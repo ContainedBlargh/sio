@@ -1,0 +1,27 @@
+$tmp
+$prev
+$count
+
+@mov -1 clk
+@mov 5 stdin
+@mov stdin acc
+@cst 0
+@mov acc prev
+
+main:
+    mov 5 stdin         # Allocate a buffer of 5 chars in stdin and read
+    mov stdin acc       # Move the stuff read from stdin to acc
+    teq null acc        # Tests if the stuff we just read is blank
+    + mov "\n" stdout
+    + mov count stdout  # In that case, print to stdout.
+    + mov "\n" stdout
+    + end               # And end the program.
+    - cst 0             # Cast acc to an integer
+    tgt acc prev        # If we've got an increase, increment count
+    + mov acc prev      # To increment count, we must first swap acc
+    + mov count acc
+    + add 1             # Then we can add 1
+    + mov acc count
+    - mov acc prev
+    jmp main
+

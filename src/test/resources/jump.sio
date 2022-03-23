@@ -1,10 +1,14 @@
-@mov 1000 clk
+@mov 500 clk
 @mov 100 acc
-@ mov "\n" stdout
+@mov "Counting down from " stdout
+@mov acc stdout
+@mov "\n" stdout
 
 loop:
     sub 1
-    mov "\r..." stdout
+    mov "\r" stdout
+    mov acc stdout
+    mov " " stdout
 
 tgt acc 0
 + jmp loop
@@ -12,5 +16,5 @@ tgt acc 0
 
 finalize:
     mov "\n" stdout
-    mov "I just jumped\n" stdout
+    mov "I'm done counting :) \n" stdout
     end

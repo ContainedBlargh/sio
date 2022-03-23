@@ -2,10 +2,11 @@
  * Registers - an object to keep track of the default registers.
  */
 object Registers {
-    private val clk = AnyRegister.ClockRegister()
-    private val acc = AnyRegister.Register("acc")
-    private val stdout = AnyRegister.Stdout()
-    private val stdin = AnyRegister.Stdin()
-    private val stderr = AnyRegister.StdErr()
-    fun getDefault(): List<AnyRegister> = listOf(clk, acc, stdout, stdin, stderr)
+    private val nil = Register.NullRegister()
+    private val clk = Register.ClockRegister()
+    private val acc = Register.PlainRegister("acc")
+    private val stdout = Register.Stdout()
+    private val stdin = Register.Stdin()
+    private val stderr = Register.StdErr()
+    fun getDefault(): List<Register> = listOf(nil, clk, acc, stdout, stdin, stderr)
 }
