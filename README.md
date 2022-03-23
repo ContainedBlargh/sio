@@ -1,7 +1,7 @@
 # SIO - A variant of the MCxxxx stack programming language from Shenzhen I/O™
 
 This implementation is a runtime / VM / interpreter that parses and runs an extension of the stack programming language
-featured in [Zachtronic's Shenzhen I/O](https://www.zachtronics.com/shenzhen-io/).
+featured in [Zachtronics' Shenzhen I/O](https://www.zachtronics.com/shenzhen-io/).
 
 ## Example
 
