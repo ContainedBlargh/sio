@@ -2,7 +2,6 @@ $dat
 $c
 
 @mov 3 c
-mov acc c
 
 mov "spongebob" acc
 
@@ -23,3 +22,4 @@ mov acc stdout
 mov "\n" stdout
 mov c acc
 sub 1
+mov acc c

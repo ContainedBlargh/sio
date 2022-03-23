@@ -19,11 +19,11 @@ class NodeTests {
         runBlocking { node.start().join() }
     }
 
-    @Test
-    fun `Test reading from stdin`() {
-        val node = Parser.parseFromSource(getResourceFilePath("read.sio"))
-        runBlocking { node.start().join() }
-    }
+//    @Test
+//    fun `Test reading from stdin`() {
+//        val node = Parser.parseFromSource(getResourceFilePath("read.sio"))
+//        runBlocking { node.start().join() }
+//    }
 
     @Test
     fun `Test jumping around`() {

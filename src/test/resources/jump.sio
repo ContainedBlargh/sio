@@ -1,4 +1,4 @@
-@mov 500 clk
+@mov -1 clk
 @mov 100 acc
 @mov "Counting down from " stdout
 @mov acc stdout
