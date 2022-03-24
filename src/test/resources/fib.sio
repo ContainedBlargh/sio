@@ -1,0 +1,36 @@
+$a
+$b
+$c
+$i
+$n
+
+@mov -1 clk
+mov 2 i
+mov 0 a
+mov 1 b
+mov 0 c
+
+mov 5 stdin
+mov stdin acc
+cst 0
+mov acc n
+teq n 0
++ jmp ret
+
+loop:                       # for (i = 2; i <= n; i++)
+    tgt i n                 # if i > n
+    + mov b a               #
+    + jmp ret               #   return b
+    mov a acc               # v
+    add b                   # -> c = a + b
+    mov acc c               # ^
+    mov b a                 # a = b
+    mov c b                 # b = c
+    mov i acc               # v
+    add 1                   # i++
+    mov acc i               # ^
+    jmp loop
+
+ret:
+    mov a stdout
+    mov "\n" stdout

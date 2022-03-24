@@ -19,12 +19,6 @@ class NodeTests {
         runBlocking { node.start().join() }
     }
 
-//    @Test
-//    fun `Test reading from stdin`() {
-//        val node = Parser.parseFromSource(getResourceFilePath("read.sio"))
-//        runBlocking { node.start().join() }
-//    }
-
     @Test
     fun `Test jumping around`() {
         val node = Parser.parseFromSource(getResourceFilePath("jump.sio"))
@@ -41,5 +35,15 @@ class NodeTests {
     fun `Test random node`() {
         val node = Parser.parseFromSource(getResourceFilePath("random.sio"))
         runBlocking { node.start().join() }
+    }
+
+    @Test
+    fun `Test XBus nodes`() {
+        val receiver = Parser.parseFromSource(getResourceFilePath("xbus-receiver.sio"))
+        val sender = Parser.parseFromSource(getResourceFilePath("xbus-sender.sio"))
+        runBlocking {
+            sender.start()
+            receiver.start().join()
+        }
     }
 }

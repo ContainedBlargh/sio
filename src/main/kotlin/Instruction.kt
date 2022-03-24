@@ -35,17 +35,15 @@ sealed class Instruction {
     }
 
     data class Slx(val xRegisterRef: Value) : Instruction() {
-        private val xBusRegister: Register.XBusRegister
+        private val xBusRegister: Register.PinRegister<XBusChannel>
 
         init {
             if (xRegisterRef !is RegisterRef) {
                 throw IllegalArgumentException("Cannot slx on non-XBus register!")
             }
             val register = xRegisterRef.register
-            if (register !is Register.XBusRegister) {
-                throw IllegalArgumentException("Cannot slx on non-XBus register!")
-            }
-            xBusRegister = register
+            xBusRegister = (register as? Register.PinRegister<XBusChannel>)
+                ?: throw IllegalArgumentException("Cannot slx on non-XBus register!")
         }
 
         override suspend fun modify(node: Node) {

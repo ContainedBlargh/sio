@@ -98,22 +98,19 @@ sealed class Register {
         override fun get(): Value = Value.IValue(clockSpeed)
     }
 
-    data class XBusRegister(
+    class PinRegister<C : PinChannel>(
         override val identifier: String,
-        val channel: XBusChannel
+        val channel: C
     ) : Register() {
-        override fun put(value: Value) {
-            channel.send(value)
-        }
-
-        override fun get(): Value = channel.receive()
+        override fun put(value: Value) = channel.send(value)
+        override fun get() = channel.receive()
     }
 
-    abstract class WriteRegistry : Register() {
+    abstract class WriteRegister : Register() {
         private val tapeMemory = LinkedList<String>()
         abstract fun write(s: String)
         override fun put(value: Value) {
-            val s = value.toString()
+            val s = value.asString()
             tapeMemory.addLast(s)
             write(s)
         }
@@ -123,7 +120,7 @@ sealed class Register {
         }
     }
 
-    data class Stdout(override val identifier: String = "stdout") : WriteRegistry() {
+    data class Stdout(override val identifier: String = "stdout") : WriteRegister() {
         private val writer = System.out.bufferedWriter()
 
         override fun write(s: String) {
@@ -160,10 +157,11 @@ sealed class Register {
         }
     }
 
-    data class StdErr(override val identifier: String = "stderr") : WriteRegistry() {
+    data class StdErr(override val identifier: String = "stderr") : WriteRegister() {
         private val writer = System.err.bufferedWriter()
         override fun write(s: String) {
-            return writer.write(s)
+            writer.write(s)
+            writer.flush()
         }
     }
 }

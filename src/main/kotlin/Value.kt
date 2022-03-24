@@ -34,6 +34,7 @@ sealed class Value {
         }
     }
 
+    abstract fun asString(): String
     abstract fun toInt(): Int
     abstract fun toFloat(): Float
     abstract fun flatten(): Value
@@ -46,6 +47,8 @@ sealed class Value {
     abstract operator fun compareTo(value: Value): Int
 
     class NullValue() : Value() {
+        override fun asString(): String = "null"
+
         override fun toInt(): Int = 0
 
         override fun toFloat(): Float = Float.NaN
@@ -76,7 +79,7 @@ sealed class Value {
 
     data class RegisterRef(val register: Register) : Value() {
         fun lookup() = register.get()
-        override fun toString() = register.get().toString()
+        override fun asString() = register.get().asString()
         override fun toInt() = register.get().toInt()
         override fun toFloat() = register.get().toFloat()
         override fun flatten() = register.get()
@@ -108,7 +111,7 @@ sealed class Value {
     }
 
     data class SValue(val s: String) : Value() {
-        override fun toString() = s
+        override fun asString() = s
         override fun toInt() = s.trim().toIntOrNull() ?: 0
         override fun toFloat() = s.toFloatOrNull() ?: 0f
         override fun flatten() = this
@@ -153,16 +156,16 @@ sealed class Value {
             return SValue("${s[i]}")
         }
 
-        override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.toString()))
+        override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.asString()))
 
         override fun compareTo(value: Value): Int = when(value) {
             is NullValue -> -1 * value.compareTo(this)
-            else -> s.compareTo(value.toString())
+            else -> s.compareTo(value.asString())
         }
     }
 
     data class FValue(val f: Float) : Value() {
-        override fun toString() = "$f"
+        override fun asString() = "$f"
         override fun toInt() = f.toInt()
         override fun toFloat() = f
         override fun flatten() = this
@@ -182,7 +185,7 @@ sealed class Value {
     }
 
     data class IValue(val i: Int) : Value() {
-        override fun toString() = "$i"
+        override fun asString() = "$i"
         override fun toInt() = i
         override fun toFloat() = i.toFloat()
         override fun flatten() = this

@@ -1,0 +1,23 @@
+$x0
+$count
+$sum
+$dat
+
+@mov -1 clk
+@mov 0 count
+
+slx x0
+mov x0 dat
+tlt dat 0
++ mov "received " stdout
++ mov count stdout
++ mov " packages, package sum: " stdout
++ mov sum stdout
++ mov "\n" stdout
++ end
+mov sum acc
+add dat
+mov acc sum
+mov count acc
+add 1
+mov acc count

@@ -132,22 +132,22 @@ object Parser {
                 registers,
                 tokenIterator
             ) {
-                if (it is RegisterRef && it.register is Register.XBusRegister)
+                if (it is RegisterRef && (it.register as? Register.PinRegister<*>)?.let { it.channel is XBusChannel } != null)
                     Slx(it)
                 else
-                    throw ParserException("slx must wait for an XBus register.")
+                    throw ParserException("slx must wait for an XBus register, but tried to wait for a ${(it as RegisterRef).register.javaClass}.")
             }
-            "add" -> parseMonOp(registers, tokenIterator) { Add(it) }
-            "sub" -> parseMonOp(registers, tokenIterator) { Sub(it) }
-            "mul" -> parseMonOp(registers, tokenIterator) { Mul(it) }
+            "add" -> parseMonOp(registers, tokenIterator, ::Add)
+            "sub" -> parseMonOp(registers, tokenIterator, ::Sub)
+            "mul" -> parseMonOp(registers, tokenIterator, ::Mul)
             "not" -> Not()
-            "cst" -> parseMonOp(registers, tokenIterator) { Cst(it) }
-            "dgt" -> parseMonOp(registers, tokenIterator) { Dgt(it) }
-            "dst" -> parseBinOp(registers, tokenIterator) { l, r -> Dst(l, r) }
-            "teq" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Teq(l, r, p, n) }
-            "tgt" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Tgt(l, r, p, n) }
-            "tlt" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Tlt(l, r, p, n) }
-            "tcp" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines) { l, r, p, n -> Tcp(l, r, p, n) }
+            "cst" -> parseMonOp(registers, tokenIterator, ::Cst)
+            "dgt" -> parseMonOp(registers, tokenIterator, ::Dgt)
+            "dst" -> parseBinOp(registers, tokenIterator, ::Dst)
+            "teq" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines, ::Teq)
+            "tgt" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines, ::Tgt)
+            "tlt" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines, ::Tlt)
+            "tcp" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines, ::Tcp)
             else -> throw ParserException("Unknown instruction: '$first'")
         }
         if (tokenIterator.hasNext()) {
@@ -156,11 +156,14 @@ object Parser {
         return inst
     }
 
-    private val registerExp = Regex("^\\$([a-zA-Z]+[a-zA-Z0-9]*)\\s?(.*)\$")
-    private val labelExp = Regex("^([a-zA-Z]+[a-zA-Z0-9]*):\\s?(.*)\$")
+    private val registerExp = Regex("^\\$([a-oq-wyzA-Z][a-zA-Z0-9]*)\\s?(.*)\$")
+    private val pinExp = Regex("^\\$([px][0-9a-zA-Z]+)\\s?(.*)$")
+    private val xBusExp = Regex("^\\$(x[a-zA-Z0-9]+)\\s?(.*)\$")
+    private val labelExp = Regex("^([a-zA-Z]+[a-zA-Z0-9]*):\\s*(.*)\$")
     private val tokenExp = Regex("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
     fun parseFromSource(sourcePath: String): Node {
+        val name = sourcePath.split('/', '\\').last()
         val lines = Files
             .readAllLines(Paths.get(sourcePath))
             .map { it.trimEnd() }
@@ -172,16 +175,33 @@ object Parser {
         val instructionList = mutableListOf<Pair<Boolean, Instruction>>()
         val registers = Registers.getDefault().associateBy { it.identifier }.toMutableMap()
         val jmpTable = mutableMapOf<String, Int>()
+        var pinId = 0;
         var i = 0
         loop@ while (lineIterator.hasNext()) {
             var line = lineIterator.next().trim()
             i++
             stack.add("[$i]: $line")
+            if (line.matches(pinExp)) {
+                val isXbus = xBusExp.matches(line)
+                val match = pinExp.find(line)!!
+                val name = match.groupValues[1]
+                registers.put(
+                    name, Register.PinRegister(
+                        name,
+                        Pins.getPinChannel(pinId++, isXbus)
+                            ?: throw ParserException("Pin register mismatch! Check the type of $name!")
+                    )
+                )
+                if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
+                    continue@loop
+                }
+                line = match.groupValues[2]
+            }
             if (line.matches(registerExp)) {
                 val match = registerExp.find(line)!!
                 val name = match.groupValues[1]
                 registers.put(name, Register.PlainRegister(name))
-                if (match.groupValues.size == 1) {
+                if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
                     continue@loop
                 }
                 line = match.groupValues[2]
@@ -193,7 +213,7 @@ object Parser {
                     throw ParserException("parser error, label '$label' already defined!\n[$i]:$line")
                 }
                 jmpTable[label] = instructionList.size
-                if (match.groupValues.size == 1) {
+                if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
                     continue@loop
                 }
                 line = match.groupValues[2]
@@ -217,6 +237,7 @@ object Parser {
         if (jmpTable.any { it.value >= instructionList.size }) {
             throw ParserException("Cannot have jump label as final line!")
         }
-        return Node(instructionList, registers, jmpTable)
+        stack.clear()
+        return Node(name, instructionList, registers, jmpTable)
     }
 }

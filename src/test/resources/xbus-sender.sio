@@ -1,0 +1,9 @@
+$x0
+
+@mov -1 clk
+@mov 10 acc
+mov acc x0
+teq acc -1
++ end
+sub 1
+

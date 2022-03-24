@@ -6,10 +6,10 @@
 
 loop:
     sub 1
-    mov "\r" stdout
+    mov "" stdout
     mov acc stdout
-    mov " " stdout
-
+    mov "\n" stdout
+    slp 1
 tgt acc 0
 + jmp loop
 - jmp finalize

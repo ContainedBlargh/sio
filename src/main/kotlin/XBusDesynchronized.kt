@@ -1,1 +1,1 @@
-class XBusDesynchronized: Exception("XBus channel was desynchronized!")
+class XBusDesynchronized: RuntimeException("XBus channel was desynchronized!")

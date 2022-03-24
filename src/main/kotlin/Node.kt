@@ -2,6 +2,7 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class Node(
+    private val name: String,
     private val instructionList: List<Pair<Boolean, Instruction>>,
     private val registers: Map<String, Register>,
     private val jmpTable: Map<String, Int>
@@ -29,21 +30,14 @@ class Node(
     }
 
     suspend fun sleep(duration: Int) {
-        val speed = registers["clk"]?.get()?.toInt() ?: 500
-        delay(duration * 1000L / speed)
-    }
-
-    private fun showRegister(register: String) {
-        val reg = getRegister(register)
-        val v = reg.get()
-        when(v) {
-            is Value.SValue -> println("DEBUG: $register: '$v'")
-            else -> println("DEBUG: $register: $v")
+        if (clock.active) {
+            val speed = registers["clk"]?.get()?.toInt() ?: 500
+            delay(duration * 1000L / speed)
         }
     }
 
     fun start(): Job = GlobalScope.launch {
-        var timer: Deferred<Unit> = async {  }
+        var timer: Deferred<Unit> = async { }
         while (running.get()) {
             if (clock.active) {
                 val speed = clock.get().toInt()
@@ -60,6 +54,9 @@ class Node(
             }
             programPosition = (programPosition + 1) % instructionList.size
             if (clock.active) {
+                // That's right, if the clock is active the language runs way slower.
+                // On purpose!
+                // In that way, it's not really that different from Python.
                 timer.await()
             }
         }
