@@ -1,0 +1,5 @@
+mov "aa" acc
+mul "bb"
+mov acc stdout
+mov "\n" stdout
+end

@@ -117,15 +117,17 @@ sealed class Value {
         override fun flatten() = this
         override fun plus(value: Value): Value {
             return when (value) {
+                is RegisterRef -> this.plus(value.flatten())
                 is SValue -> SValue(s + value.s)
                 is FValue -> SValue(s + value.f)
                 is IValue -> SValue(s + value.i)
-                else -> this.plus(value.flatten())
+                is NullValue -> this
             }
         }
 
         override fun minus(value: Value): Value {
             return when (value) {
+                is RegisterRef -> this.minus(value.flatten())
                 is SValue -> SValue(s.replace(value.s, ""))
                 is FValue -> String.format("%f.1", value.f).split(".").sorted().let {
                     val l = max(it.first().toInt(), s.length - 1)
@@ -133,17 +135,18 @@ sealed class Value {
                     SValue(s.slice(l until r))
                 }
                 is IValue -> SValue(s.slice(0 until min(value.i, s.length)))
-                else -> this.minus(value.flatten())
+                is NullValue -> this
             }
         }
 
         override fun times(value: Value): Value {
             return when (value) {
+                is RegisterRef -> this.times(value.flatten())
                 is SValue -> SValue(s.toCharArray().flatMap { i -> value.s.toCharArray().map { j -> "$i$j" } }
                     .fold("", String::plus))
                 is FValue -> SValue(s.repeat((value.f * s.length.toFloat()).toInt() / s.length))
                 is IValue -> SValue(s.repeat(value.i))
-                else -> this.minus(value.flatten())
+                is NullValue -> SValue("")
             }
         }
 
