@@ -71,7 +71,7 @@ Once you have it, you can run it like:
 ## Don't like it?
 
 Press backspace on your keyboard to go back in your browser-history. If that doesn't work, you are probably forced to 
-either type a new URL into the URL-field at the top. If *that* doesn't work, you can press CTRL+W to close the tab.
+either type a new URL into the URL-field at the top or close the tab. If *that* doesn't work, you can press CTRL+W to close the tab.
 In the most dire cases you can probably get away from this page by pressing ALT+F4, but only do this if you are 
 prepared to close the entire browser. 
 
