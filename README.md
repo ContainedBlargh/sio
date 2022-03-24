@@ -68,6 +68,10 @@ Once you have it, you can run it like:
 
 `java -jar sio.jar <your .sio script>`
 
+## Other examples
+
+Check out the [test-resources folder](src/test/resources/) for more examples used in testing.
+
 ## Don't like it?
 
 Press backspace on your keyboard to go back in your browser-history. If that doesn't work, you are probably forced to 
