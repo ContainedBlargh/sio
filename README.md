@@ -1,4 +1,4 @@
-# SIO - A variant of the MCxxxx stack programming language from Shenzhen I/O™
+# SIO - A variant of the MCxxxx programming language from Shenzhen I/O™
 
 This implementation is a runtime / VM / interpreter that parses and runs an extension of the stack programming language
 featured in [Zachtronics' Shenzhen I/O](https://www.zachtronics.com/shenzhen-io/).
@@ -67,6 +67,10 @@ You need at least Java 8 to run it.
 Once you have it, you can run it like:
 
 `java -jar sio.jar <your .sio script>`
+
+## Other examples
+
+Check out the [test-resources folder](src/test/resources/) for more examples used in testing.
 
 ## Don't like it?
 
