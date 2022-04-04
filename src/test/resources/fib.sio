@@ -10,8 +10,13 @@ mov 0 a
 mov 1 b
 mov 0 c
 
+@mov "Type a number x to run fib(x) or type 'quit' to quit\n" stdout
+mov "> " stdout
+
 mov 5 stdin
 mov stdin acc
+teq acc "quit\n"
++ end
 cst 0
 mov acc n
 teq n 0
