@@ -39,6 +39,20 @@ object Parser {
         return ctor(lVal, rVal)
     }
 
+    private fun parseTriOp(
+        registers: Map<String, Register>,
+        tokenIterator: Iterator<String>,
+        ctor: (Value, Value, Value) -> Instruction
+    ): Instruction {
+        val first = tokenIterator.tryNext() ?: throw ParserException("No operands found for TriOp!")
+        val second = tokenIterator.tryNext() ?: throw ParserException("2nd operand missing for TriOp!")
+        val third = tokenIterator.tryNext() ?: throw ParserException("3rd operand missing for TriOp!")
+        val fVal = Value.parse(first, registers)
+        val sVal = Value.parse(second, registers)
+        val tVal = Value.parse(third, registers)
+        return ctor(fVal, sVal, tVal)
+    }
+
     private fun splitIntoTokens(line: String): List<String> {
         val noComments = line.split("#", ";").first().trim()
         val noAts = noComments.replace("@", "")
@@ -137,6 +151,7 @@ object Parser {
                 else
                     throw ParserException("slx must wait for an XBus register, but tried to wait for a ${(it as RegisterRef).register.javaClass}.")
             }
+            "gen" -> parseTriOp(registers, tokenIterator, ::Gen)
             "add" -> parseMonOp(registers, tokenIterator, ::Add)
             "sub" -> parseMonOp(registers, tokenIterator, ::Sub)
             "mul" -> parseMonOp(registers, tokenIterator, ::Mul)

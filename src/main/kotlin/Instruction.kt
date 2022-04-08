@@ -51,6 +51,26 @@ sealed class Instruction {
         }
     }
 
+    data class Gen(val registerRef: Value, val onDuration: Value, val offDuration: Value) : Instruction() {
+        private val pinRegister: Register.PinRegister<*>
+
+        init {
+            if (registerRef !is RegisterRef) {
+                throw IllegalArgumentException("Gen: first argument must be a register!")
+            }
+            val register = registerRef.register
+            pinRegister = (register as? Register.PinRegister<*>)
+                ?: throw IllegalArgumentException("Gen must be applied to a channel pin-register!")
+        }
+
+        override suspend fun modify(node: Node) {
+            pinRegister.put(Value.IValue(100))
+            node.sleep(onDuration.toInt())
+            pinRegister.put(Value.IValue(0))
+            node.sleep(offDuration.toInt())
+        }
+    }
+
     abstract class AccInstruction : Instruction() {
         abstract fun updateAcc(acc: Register.PlainRegister)
         override suspend fun modify(node: Node) {
