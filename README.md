@@ -43,9 +43,7 @@ Luckily, I found this kotlin project in a dumpster outside a chinese-themed gril
   - Cast values between the types using the `cst T` instruction. It operates on the `acc` register.
   - All the `acc`-related instructions such as `acc`, `add`, `sub` & `mul` apply to all the types, try them out!
   - Test-instructions are also applicable.
-- Declare your own registers at the beginning of a file by writing `$name`. Use these to store values. In the future the language will hopefully
-  feature XBus and simple I/O registers for passing values between multiple nodes, so the prefixes `x`and `p` should be
-  for those types of registers only.
+- Declare your own registers at the beginning of a file by writing `$name`. Use these to store values. XBus and simple I/O registers are used for passing values between multiple nodes, so the prefixes `x`and `p` should be for those types of registers only. You still have to declare them and the order of the declarations determine the identity of each port.
 - Use the new built-in registers!
   - Set a clock-speed by writing to the `clk`-register. Write `-1` to enable overclocking (makes it go faster by disabling
     timing entirely)
