@@ -199,9 +199,9 @@ sealed class Value {
             return IValue(if (i == 0) 100 else 0)
         }
 
-        override fun dgt(p: Int): Value = IValue(i.toString()[p].digitToInt())
+        override fun dgt(i: Int): Value = IValue(this.i.toString()[i].digitToInt())
 
-        override fun dst(p: Int, v: Value): Value = IValue(setDigit(i, p, v.toInt()))
+        override fun dst(i: Int, v: Value): Value = IValue(setDigit(this.i, i, v.toInt()))
 
         override fun compareTo(value: Value): Int = i.compareTo(value.toInt())
     }
