@@ -1,27 +1,36 @@
-$tmp
-$prev
-$count
+$cnt # register for the total amount of increases.
+$prv # register for the previously recorded measurement
 
-@mov -1 clk
-@mov 5 stdin
-@mov stdin acc
-@cst 0
-@mov acc prev
+# Disable clock
+# @mov -1 clk
 
-main:
-    mov 5 stdin         # Allocate a buffer of 5 chars in stdin and read
-    mov stdin acc       # Move the stuff read from stdin to acc
-    teq null acc        # Tests if the stuff we just read is blank
-    + mov "\n" stdout
-    + mov count stdout  # In that case, print to stdout.
-    + mov "\n" stdout
-    + end               # And end the program.
-    - cst 0             # Cast acc to an integer
-    tgt acc prev        # If we've got an increase, increment count
-    + mov acc prev      # To increment count, we must first swap acc
-    + mov count acc
-    + add 1             # Then we can add 1
-    + mov acc count
-    - mov acc prev
-    jmp main
+# Pre-fill prv with the highest possible number.
+@mov 1000 prv
 
+# Read three characters and one newline from stdin.
+mov 3 stdin
+mov stdin acc
+# Discard newlines
+mov 1 stdin
+mov stdin null
+
+mov "read '" stdout
+mov acc stdout
+mov "'\n" stdout
+
+teq acc null # check if acc is blank.
++ mov "total: " stdout
++ mov cnt stdout
++ mov "\n" stdout
++ end
+
+# Cast acc to an integer.
+cst "i"
+
+# Test if acc is greater than prv
+tgt acc prv
++ mov acc prv
++ mov cnt acc
++ add 1
++ mov acc cnt
+- mov acc prv

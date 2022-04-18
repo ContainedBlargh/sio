@@ -134,6 +134,12 @@ object Parser {
                 }
                 Mov(lVal, rVal)
             }
+            "swp" -> parseBinOp(registers, tokenIterator) { lVal, rVal ->
+                if (lVal !is RegisterRef || rVal !is RegisterRef) {
+                    throw ParserException("swp requires both operands to be registerRefs!")
+                }
+                Swp(lVal, rVal)
+            }
             "jmp" -> {
                 val label = tokenIterator.tryNext() ?: throw IllegalStateException("jmp must have a label!")
                 if (label !in jmpLabels) {

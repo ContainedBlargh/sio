@@ -1,5 +1,7 @@
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
+import java.nio.file.Paths
 
 class NodeTests {
     fun getResourceFilePath(name: String): String =
@@ -44,6 +46,17 @@ class NodeTests {
         runBlocking {
             sender.start()
             receiver.start().join()
+        }
+    }
+
+    @Test
+    fun `Test AOC1 node`() {
+        val input = Files.newInputStream(Paths.get(getResourceFilePath("aoc1.test")))
+        System.setIn(input)
+        val node = Parser.parseFromSource(getResourceFilePath("aoc1.sio"))
+        val handle = node.start()
+        runBlocking {
+            handle.join()
         }
     }
 }

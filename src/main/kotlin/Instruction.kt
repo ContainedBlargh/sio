@@ -23,6 +23,21 @@ sealed class Instruction {
         }
     }
 
+    /**
+     * Swp - Swap the values of two registers.
+     *
+     * @property left - a register reference
+     * @property right - another register reference
+     * @constructor Create empty Swp
+     */
+    class Swp(val left: RegisterRef, val right: RegisterRef) : Instruction() {
+        override suspend fun modify(node: Node) {
+            val tmp = left.lookup()
+            left.register.put(right.lookup())
+            right.register.put(tmp)
+        }
+    }
+
     data class Jmp(val label: String) : Instruction() {
         override suspend fun modify(node: Node) {
             node.jumpTo(label)
@@ -31,7 +46,6 @@ sealed class Instruction {
 
     data class Slp(val duration: Value) : Instruction() {
         override suspend fun modify(node: Node) = node.sleep(duration.toInt())
-
     }
 
     data class Slx(val xRegisterRef: Value) : Instruction() {

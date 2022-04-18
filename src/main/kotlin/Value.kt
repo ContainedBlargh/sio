@@ -162,7 +162,8 @@ sealed class Value {
         override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.asString()))
 
         override fun compareTo(value: Value): Int = when(value) {
-            is NullValue -> -1 * value.compareTo(this)
+            is RegisterRef -> compareTo(value.flatten())
+            is NullValue -> value.compareTo(this)
             else -> s.compareTo(value.asString())
         }
     }
