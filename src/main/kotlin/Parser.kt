@@ -180,7 +180,7 @@ object Parser {
     private val pinExp = Regex("^\\$([px][0-9]+[0-9a-zA-Z]*)\\s?(.*)$")
     private val xBusExp = Regex("^\\$(x[0-9]+[0-9a-zA-Z]*)\\s?(.*)\$")
     private val registerExp = Regex("^\\$([a-zA-Z0-9]+)\\s?(.*)\$")
-    private val labelExp = Regex("^([a-zA-Z]+[a-zA-Z0-9]*):\\s*(.*)\$")
+    private val labelExp = Regex("^([a-zA-Z_\\-]+[a-zA-Z0-9_\\-]*):\\s*(.*)\$")
     private val tokenExp = Regex("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
     fun parseFromSource(sourcePath: String): Node {
