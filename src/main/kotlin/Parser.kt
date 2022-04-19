@@ -163,6 +163,8 @@ object Parser {
             "mul" -> parseMonOp(registers, tokenIterator, ::Mul)
             "not" -> Not()
             "cst" -> parseMonOp(registers, tokenIterator, ::Cst)
+            "inc" -> parseMonOp(registers, tokenIterator, ::Inc)
+            "dec" -> parseMonOp(registers, tokenIterator, ::Dec)
             "dgt" -> parseMonOp(registers, tokenIterator, ::Dgt)
             "dst" -> parseBinOp(registers, tokenIterator, ::Dst)
             "teq" -> parseTestOp(registers, jmpLabels, tokenIterator, remainingLines, ::Teq)

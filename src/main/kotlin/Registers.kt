@@ -6,6 +6,7 @@ object Registers {
         Register.NullRegister(),
         Register.ClockRegister(),
         Register.PlainRegister("acc"),
+//        Register.StackRegister(),
         Register.Stdout(),
         Register.Stdin(),
         Register.StdErr(),

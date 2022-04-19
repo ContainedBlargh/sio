@@ -1,4 +1,4 @@
-import Value.RegisterRef
+import Value.*
 
 sealed class Instruction {
 
@@ -30,7 +30,7 @@ sealed class Instruction {
      * @property right - another register reference
      * @constructor Create empty Swp
      */
-    class Swp(val left: RegisterRef, val right: RegisterRef) : Instruction() {
+    data class Swp(val left: RegisterRef, val right: RegisterRef) : Instruction() {
         override suspend fun modify(node: Node) {
             val tmp = left.lookup()
             left.register.put(right.lookup())
@@ -78,9 +78,9 @@ sealed class Instruction {
         }
 
         override suspend fun modify(node: Node) {
-            pinRegister.put(Value.IValue(100))
+            pinRegister.put(IValue(100))
             node.sleep(onDuration.toInt())
-            pinRegister.put(Value.IValue(0))
+            pinRegister.put(IValue(0))
             node.sleep(offDuration.toInt())
         }
     }
@@ -131,16 +131,43 @@ sealed class Instruction {
 
     class Cst(val type: Value) : AccInstruction() {
         override fun updateAcc(acc: Register.PlainRegister) {
-            when (type) {
-                is Value.SValue -> when (type.s) {
-                    "i" -> acc.put(Value.IValue(acc.get().toInt()))
-                    "f" -> acc.put(Value.FValue(acc.get().toFloat()))
-                    "s" -> acc.put(Value.SValue(acc.get().toString()))
-                    else -> acc.put(Value.SValue(acc.get().toString()))
+            fun update(givenType: Value) {
+                when (givenType) {
+                    is SValue -> when (givenType.s) {
+                        "i" -> acc.put(IValue(acc.get().toInt()))
+                        "f" -> acc.put(FValue(acc.get().toFloat()))
+                        "s" -> acc.put(SValue(acc.get().toString()))
+                        else -> acc.put(SValue(acc.get().toString()))
+                    }
+                    is IValue -> acc.put(IValue(acc.get().toInt()))
+                    is FValue -> acc.put(FValue(acc.get().toFloat()))
+                    is NullValue -> acc.put(NullValue())
+                    is RegisterRef -> update(givenType.flatten())
                 }
-                is Value.IValue -> acc.put(Value.IValue(acc.get().toInt()))
-                is Value.FValue -> acc.put(Value.FValue(acc.get().toFloat()))
             }
+            update(type)
+        }
+    }
+
+    class Inc(val ref: Value) : AccInstruction() {
+        override fun updateAcc(acc: Register.PlainRegister) {
+            if (ref !is RegisterRef) {
+                throw IllegalArgumentException("Cannot increment a non-register!")
+            }
+            val next = acc.get() + IValue(1)
+            acc.put(next)
+            ref.register.put(next)
+        }
+    }
+
+    class Dec(val ref: Value) : AccInstruction() {
+        override fun updateAcc(acc: Register.PlainRegister) {
+            if (ref !is RegisterRef) {
+                throw IllegalArgumentException("Cannot decrement a non-register!")
+            }
+            val next = acc.get() - IValue(-1)
+            acc.put(next)
+            ref.register.put(next)
         }
     }
 

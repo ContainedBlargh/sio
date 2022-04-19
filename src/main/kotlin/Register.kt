@@ -106,7 +106,20 @@ sealed class Register {
         override fun get() = channel.receive()
     }
 
-    abstract class WriteRegister : Register() {
+//    class StackRegister(
+//        override val identifier: String = "stk"
+//    ) : Register() {
+//        private val stack = LinkedList<Value>()
+//        override fun put(value: Value) {
+//            stack.push(value)
+//        }
+//
+//        override fun get(): Value {
+//            return stack.pollFirst() ?: Value.NullValue()
+//        }
+//    }
+
+    abstract class TapeRegister : Register() {
         private val tapeMemory = LinkedList<String>()
         abstract fun write(s: String)
         override fun put(value: Value) {
@@ -120,7 +133,7 @@ sealed class Register {
         }
     }
 
-    data class Stdout(override val identifier: String = "stdout") : WriteRegister() {
+    data class Stdout(override val identifier: String = "stdout") : TapeRegister() {
         private val writer = System.out.bufferedWriter()
 
         override fun write(s: String) {
@@ -157,7 +170,7 @@ sealed class Register {
         }
     }
 
-    data class StdErr(override val identifier: String = "stderr") : WriteRegister() {
+    data class StdErr(override val identifier: String = "stderr") : TapeRegister() {
         private val writer = System.err.bufferedWriter()
         override fun write(s: String) {
             writer.write(s)
