@@ -185,7 +185,80 @@ object Parser {
     private val labelExp = Regex("^([a-zA-Z_\\-]+[a-zA-Z0-9_\\-]*):\\s*(.*)\$")
     private val tokenExp = Regex("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
-    fun parseFromSource(sourcePath: String): Node {
+    fun parseLines(registers: MutableMap<String, Register>, vararg lines: String): List<Pair<Boolean, Instruction>> {
+        val labels = lines.filter { it.matches(labelExp) }.map {
+            val match = labelExp.find(it)!!
+            match.groupValues[1]
+        }.toSet()
+        val lineIterator = lines.iterator()
+        val instructionList = mutableListOf<Pair<Boolean, Instruction>>()
+        val jmpTable = mutableMapOf<String, Int>()
+        var pinId = 0;
+        var i = 0
+        loop@ while (lineIterator.hasNext()) {
+            var line = lineIterator.next().trim()
+            i++
+            stack.add("[$i]: $line")
+            if (line.matches(pinExp)) {
+                val isXbus = xBusExp.matches(line)
+                val match = pinExp.find(line)!!
+                val name = match.groupValues[1]
+                registers.put(
+                    name, Register.PinRegister(
+                        name,
+                        Pins.getPinChannel(pinId++, isXbus)
+                            ?: throw ParserException("Pin register mismatch! Check the type of $name!")
+                    )
+                )
+                if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
+                    continue@loop
+                }
+                line = match.groupValues[2]
+            }
+            if (line.matches(registerExp)) {
+                val match = registerExp.find(line)!!
+                val name = match.groupValues[1]
+                registers.put(name, Register.PlainRegister(name))
+                if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
+                    continue@loop
+                }
+                line = match.groupValues[2]
+            }
+            if (line.matches(labelExp)) {
+                val match = labelExp.find(line)!!
+                val label = match.groupValues[1]
+                if (line in jmpTable.keys) {
+                    throw ParserException("parser error, label '$label' already defined!\n[$i]:$line")
+                }
+                jmpTable[label] = instructionList.size
+                if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
+                    continue@loop
+                }
+                line = match.groupValues[2]
+            }
+            val noComments = line.split("#", ";").first().trim()
+            val runOnce = noComments.startsWith("@")
+            val noAts = noComments.replace("@", "")
+            val tokens = tokenExp.findAll(noAts).map { it.groupValues[0] }.toList()
+            val tokenIterator = tokens.iterator()
+            if (!tokenIterator.hasNext()) {
+                continue@loop
+            }
+            val instruction = parseInstruction(registers, labels, tokenIterator, lines.drop(i))
+                ?: continue@loop
+            if (instruction is TestInstruction) {
+                instruction.positive.forEach { stack.add("[+]: ${lineIterator.next()}"); i++ }
+                instruction.negative.forEach { stack.add("[-]: ${lineIterator.next()}"); i++ }
+            }
+            instructionList.add(runOnce to instruction)
+        }
+        if (jmpTable.any { it.value >= instructionList.size }) {
+            throw ParserException("Cannot have jump label as final line!")
+        }
+        return instructionList
+    }
+
+    fun parseFromPath(sourcePath: String): Node {
         val name = sourcePath.split('/', '\\').last()
         val lines = Files
             .readAllLines(Paths.get(sourcePath))

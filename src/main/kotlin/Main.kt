@@ -1,14 +1,17 @@
 import kotlinx.coroutines.runBlocking
 
 object Main {
+
+
     @JvmStatic
     fun main(args: Array<String>) {
         if (args.isEmpty()) {
-            println("Usage:\nsio <source files ...>")
-            return
+            //Launch REPL.
+            val repl = Repl()
+            repl.loop()
         }
         val nodes = args.map { path ->
-            Parser.parseFromSource(path)
+            Parser.parseFromPath(path)
         }
         val jobs = nodes.map { it.start() }
         for (job in jobs) {

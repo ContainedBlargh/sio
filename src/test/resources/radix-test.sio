@@ -1,0 +1,11 @@
+mov "100110" acc
+cst "i2"
+mov acc stdout
+mov "\n" stdout
+
+mov "2a" acc
+cst "i16"
+mov acc stdout
+mov "\n" stdout
+
+end

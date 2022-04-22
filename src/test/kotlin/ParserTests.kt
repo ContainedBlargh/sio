@@ -7,7 +7,7 @@ class ParserTests {
         val filePath = javaClass.getResource("test.sio")!!.path.let {
             if (it.contains(":")) it.removePrefix("/") else it
         }
-        val parsed = Parser.parseFromSource(filePath)
+        val parsed = Parser.parseFromPath(filePath)
         println(parsed)
     }
 }

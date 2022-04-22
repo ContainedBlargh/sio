@@ -6,7 +6,7 @@ class Node(
     private val instructionList: List<Pair<Boolean, Instruction>>,
     private val registers: Map<String, Register>,
     private val jmpTable: Map<String, Int>
-) {
+) : Executable {
     private var programPosition = 0
     private var disabledPositions = mutableSetOf<Int>()
     private var running = AtomicBoolean(true)
@@ -16,20 +16,20 @@ class Node(
         registers.toString() + "\n" +
                 instructionList.toString()
 
-    fun getRegister(identifier: String): Register {
+    override fun getRegister(identifier: String): Register {
         return registers[identifier]!!
     }
 
-    fun jumpTo(label: String) {
+    override fun jumpTo(label: String) {
         //Remember to subtract 1 since the program counter will add 1 after jumping.
         programPosition = (jmpTable[label] ?: programPosition) - 1
     }
 
-    fun stop() {
+    override fun stop() {
         running.set(false)
     }
 
-    suspend fun sleep(duration: Int) {
+    override suspend fun sleep(duration: Int) {
         if (clock.active) {
             val speed = registers["clk"]?.get()?.toInt() ?: 500
             delay(duration * 1000L / speed)

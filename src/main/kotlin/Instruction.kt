@@ -3,22 +3,22 @@ import Value.*
 sealed class Instruction {
 
 
-    abstract suspend fun modify(node: Node)
+    abstract suspend fun modify(executable: Executable)
 
     object Nop : Instruction() {
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             //It's nop, it doesn't do anything.
         }
     }
 
     object End : Instruction() {
-        override suspend fun modify(node: Node) {
-            node.stop()
+        override suspend fun modify(executable: Executable) {
+            executable.stop()
         }
     }
 
     data class Mov(val take: Value, val to: RegisterRef) : Instruction() {
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             to.register.put(take.flatten())
         }
     }
@@ -31,7 +31,7 @@ sealed class Instruction {
      * @constructor Create empty Swp
      */
     data class Swp(val left: RegisterRef, val right: RegisterRef) : Instruction() {
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             val tmp = left.lookup()
             left.register.put(right.lookup())
             right.register.put(tmp)
@@ -39,13 +39,13 @@ sealed class Instruction {
     }
 
     data class Jmp(val label: String) : Instruction() {
-        override suspend fun modify(node: Node) {
-            node.jumpTo(label)
+        override suspend fun modify(executable: Executable) {
+            executable.jumpTo(label)
         }
     }
 
     data class Slp(val duration: Value) : Instruction() {
-        override suspend fun modify(node: Node) = node.sleep(duration.toInt())
+        override suspend fun modify(executable: Executable) = executable.sleep(duration.toInt())
     }
 
     data class Slx(val xRegisterRef: Value) : Instruction() {
@@ -60,7 +60,7 @@ sealed class Instruction {
                 ?: throw IllegalArgumentException("Cannot slx on non-XBus register!")
         }
 
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             xBusRegister.channel.sleep()
         }
     }
@@ -77,18 +77,18 @@ sealed class Instruction {
                 ?: throw IllegalArgumentException("Gen must be applied to a channel pin-register!")
         }
 
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             pinRegister.put(IValue(100))
-            node.sleep(onDuration.toInt())
+            executable.sleep(onDuration.toInt())
             pinRegister.put(IValue(0))
-            node.sleep(offDuration.toInt())
+            executable.sleep(offDuration.toInt())
         }
     }
 
     abstract class AccInstruction : Instruction() {
         abstract fun updateAcc(acc: Register.PlainRegister)
-        override suspend fun modify(node: Node) {
-            val acc = node.getRegister("acc")
+        override suspend fun modify(executable: Executable) {
+            val acc = executable.getRegister("acc")
             updateAcc(acc as Register.PlainRegister)
         }
     }
@@ -130,14 +130,30 @@ sealed class Instruction {
     }
 
     class Cst(val type: Value) : AccInstruction() {
+        companion object {
+
+        }
+
         override fun updateAcc(acc: Register.PlainRegister) {
             fun update(givenType: Value) {
                 when (givenType) {
-                    is SValue -> when (givenType.s) {
-                        "i" -> acc.put(IValue(acc.get().toInt()))
-                        "f" -> acc.put(FValue(acc.get().toFloat()))
-                        "s" -> acc.put(SValue(acc.get().toString()))
-                        else -> acc.put(SValue(acc.get().toString()))
+                    is SValue -> when {
+                        givenType.s == "c" -> acc.get().let {
+                            when (it) {
+                                is IValue -> acc.put(SValue(Char(it.i).toString()))
+                                is SValue -> acc.put(IValue(it.s.toCharArray().firstOrNull()?.code ?: 0))
+                                else -> acc.put(IValue(-1))
+                            }
+                        }
+                        givenType.s == "i" -> acc.put(IValue(acc.get().toInt()))
+                        givenType.s == "f" -> acc.put(FValue(acc.get().toFloat()))
+                        givenType.s == "s" -> acc.put(SValue(acc.get().asString()))
+                        givenType.s.startsWith("i") -> runCatching {
+                            val str = givenType.s.removePrefix("i")
+                            val radix = str.toInt()
+                            acc.put(IValue(acc.get().asString().toInt(radix)))
+                        }.getOrNull() ?: throw IllegalArgumentException("Invalid cast: '${givenType.asString()}'")
+                        else -> acc.put(SValue(acc.get().asString()))
                     }
                     is IValue -> acc.put(IValue(acc.get().toInt()))
                     is FValue -> acc.put(FValue(acc.get().toFloat()))
@@ -154,7 +170,7 @@ sealed class Instruction {
             if (ref !is RegisterRef) {
                 throw IllegalArgumentException("Cannot increment a non-register!")
             }
-            val next = acc.get() + IValue(1)
+            val next = ref.lookup() + IValue(1)
             acc.put(next)
             ref.register.put(next)
         }
@@ -165,7 +181,7 @@ sealed class Instruction {
             if (ref !is RegisterRef) {
                 throw IllegalArgumentException("Cannot decrement a non-register!")
             }
-            val next = acc.get() - IValue(-1)
+            val next = ref.lookup() - IValue(-1)
             acc.put(next)
             ref.register.put(next)
         }
@@ -175,11 +191,11 @@ sealed class Instruction {
         val positive: List<Instruction>, val negative: List<Instruction>
     ) : Instruction() {
         abstract fun test(): Boolean
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             if (test()) {
-                positive.forEach { it.modify(node) }
+                positive.forEach { it.modify(executable) }
             } else {
-                negative.forEach { it.modify(node) }
+                negative.forEach { it.modify(executable) }
             }
         }
     }
@@ -212,12 +228,12 @@ sealed class Instruction {
         val left: Value, val right: Value, val positive: List<Instruction>, val negative: List<Instruction>
     ) : Instruction() {
         override fun toString(): String = "Tcp($left, $right)"
-        override suspend fun modify(node: Node) {
+        override suspend fun modify(executable: Executable) {
             if (left > right) {
-                positive.forEach { it.modify(node) }
+                positive.forEach { it.modify(executable) }
             }
             if (left < right) {
-                negative.forEach { it.modify(node) }
+                negative.forEach { it.modify(executable) }
             }
         }
     }
