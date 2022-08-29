@@ -235,6 +235,7 @@ object Parser {
                 val match = memoryExp.find(line)!!
                 val name = match.groupValues[1]
                 val offsetRegister = Register.OffsetRegister("&$name")
+                registers.put("&$name", offsetRegister)
                 if (match.groupValues[2].toIntOrNull() != null) {
                     val sizeHint = match.groupValues[2].toInt()
                     registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister, sizeHint))

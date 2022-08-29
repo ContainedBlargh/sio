@@ -1,5 +1,5 @@
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.atomic.AtomicBoolean
 
 class Repl(
     private val registers: MutableMap<String, Register> = mutableMapOf()
@@ -48,6 +48,15 @@ class Repl(
                 while (true) { //Reading...
                     print("> ")
                     val line = readln()
+                    if (line.trim() in setOf("#clear", "#reset")) {
+                        registers.clear()
+                        registers.putAll(Registers.getDefault().map {
+                            it.identifier to it
+                        })
+                    }
+                    if (line.trim() == "#registers") {
+                        println(registers.entries.joinToString("\n") { "${it.key}: ${it.value}" })
+                    }
                     if (!line.isBlank()) {
                         lines.add(line)
                     } else {
