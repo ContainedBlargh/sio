@@ -1,0 +1,31 @@
+*arr[10] #Make an array that can contain 10 values.
+
+@mov -1 clk
+@mov 0 acc
+
+fill:
+    mov acc &arr
+    mov acc *arr
+
+tlt acc 10
++ add 1
++ jmp fill
+
+mov "[" stdout
+
+empty:
+    mov acc &arr
+    mov *arr stdout
+    mov ", " stdout
+
+tgt acc 1
++ sub 1
++ jmp empty
+- mov 0 &arr
+- mov *arr stdout
+- mov "]\n" stdout
+- mov "and the last one: \n" stdout
+- mov -1 &arr
+- mov *arr stdout
+- mov "\n" stdout
+- end

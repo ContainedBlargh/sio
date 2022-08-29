@@ -36,6 +36,7 @@ sealed class Register {
                     seed = value.toInt()
                     Random(System.currentTimeMillis().countOneBits()) to RandomType.STRING
                 }
+
                 is Value.FValue -> Random((value.f * 9999).toInt()) to RandomType.FLOAT
                 is Value.IValue -> Random(value.i) to RandomType.INT
             }
@@ -106,18 +107,48 @@ sealed class Register {
         override fun get() = channel.receive()
     }
 
-//    class StackRegister(
-//        override val identifier: String = "stk"
-//    ) : Register() {
-//        private val stack = LinkedList<Value>()
-//        override fun put(value: Value) {
-//            stack.push(value)
-//        }
-//
-//        override fun get(): Value {
-//            return stack.pollFirst() ?: Value.NullValue()
-//        }
-//    }
+    class OffsetRegister(
+        override val identifier: String
+    ) : Register() {
+        var offset: Int = 0
+        override fun put(value: Value) {
+            offset = value.toInt()
+        }
+
+        override fun get(): Value {
+            return Value.IValue(offset)
+        }
+    }
+
+    class MemoryRegister(
+        override val identifier: String,
+        private val offsetRegister: OffsetRegister,
+        sizeHint: Int = 8
+    ) : Register() {
+        private val memory = ArrayList<Value>(sizeHint)
+
+        init {
+            while (memory.size <= sizeHint) {
+                memory.add(Value.NullValue())
+            }
+        }
+
+        override fun put(value: Value) {
+            while (memory.size <= offsetRegister.offset) {
+                memory.add(Value.NullValue())
+            }
+            memory[offsetRegister.offset] = value
+        }
+
+        override fun get(): Value {
+            if (offsetRegister.offset < 0) {
+                val negative = (offsetRegister.offset * -1) % memory.size
+                return memory.getOrNull(memory.size - negative) ?: Value.NullValue()
+            }
+            return memory.getOrNull(offsetRegister.offset) ?: Value.NullValue()
+        }
+    }
+
 
     abstract class TapeRegister : Register() {
         private val tapeMemory = LinkedList<String>()

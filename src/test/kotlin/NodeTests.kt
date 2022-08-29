@@ -67,4 +67,12 @@ class NodeTests {
             node.start().join()
         }
     }
+
+    @Test
+    fun `Test memory register`() {
+        val node = Parser.parseFromPath(getResourceFilePath("array-test.sio"))
+        runBlocking {
+            node.start().join()
+        }
+    }
 }

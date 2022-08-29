@@ -82,11 +82,13 @@ object Parser {
                 val neg = trimmed.drop(pos.size).takeWhile { it.startsWith("-") }
                 pos to neg
             }
+
             negFirst -> {
                 val neg = trimmed.takeWhile { it.startsWith("-") }
                 val pos = trimmed.drop(neg.size).takeWhile { it.startsWith("+") }
                 pos to neg
             }
+
             else -> emptyList<String>() to emptyList<String>()
         }
         val (posOffset, negOffset) = when {
@@ -134,12 +136,14 @@ object Parser {
                 }
                 Mov(lVal, rVal)
             }
+
             "swp" -> parseBinOp(registers, tokenIterator) { lVal, rVal ->
                 if (lVal !is RegisterRef || rVal !is RegisterRef) {
                     throw ParserException("swp requires both operands to be registerRefs!")
                 }
                 Swp(lVal, rVal)
             }
+
             "jmp" -> {
                 val label = tokenIterator.tryNext() ?: throw IllegalStateException("jmp must have a label!")
                 if (label !in jmpLabels) {
@@ -147,6 +151,7 @@ object Parser {
                 }
                 return Jmp(label)
             }
+
             "slp" -> parseMonOp(registers, tokenIterator) { Slp(it) }
             "slx" -> parseMonOp(
                 registers,
@@ -157,6 +162,7 @@ object Parser {
                 else
                     throw ParserException("slx must wait for an XBus register, but tried to wait for a ${(it as RegisterRef).register.javaClass}.")
             }
+
             "gen" -> parseTriOp(registers, tokenIterator, ::Gen)
             "add" -> parseMonOp(registers, tokenIterator, ::Add)
             "sub" -> parseMonOp(registers, tokenIterator, ::Sub)
@@ -182,6 +188,7 @@ object Parser {
     private val pinExp = Regex("^\\$([px][0-9]+[0-9a-zA-Z]*)\\s?(.*)$")
     private val xBusExp = Regex("^\\$(x[0-9]+[0-9a-zA-Z]*)\\s?(.*)\$")
     private val registerExp = Regex("^\\$([a-zA-Z0-9]+)\\s?(.*)\$")
+    private val memoryExp = Regex("^[*&]([a-zA-Z0-9]+)(?:\\[(\\d+)\\])?\\s?(.*)$")
     private val labelExp = Regex("^([a-zA-Z_\\-]+[a-zA-Z0-9_\\-]*):\\s*(.*)\$")
     private val tokenExp = Regex("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
@@ -223,6 +230,24 @@ object Parser {
                     continue@loop
                 }
                 line = match.groupValues[2]
+            }
+            if (line.matches(memoryExp)) {
+                val match = memoryExp.find(line)!!
+                val name = match.groupValues[1]
+                val offsetRegister = Register.OffsetRegister("&$name")
+                if (match.groupValues[2].toIntOrNull() != null) {
+                    val sizeHint = match.groupValues[2].toInt()
+                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister, sizeHint))
+                    if (match.groupValues.size == 3 || match.groupValues.getOrNull(3)?.isBlank() == true) {
+                        continue@loop
+                    }
+                } else {
+                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister))
+                    if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
+                        continue@loop
+                    }
+                }
+                line = match.groupValues.last()
             }
             if (line.matches(labelExp)) {
                 val match = labelExp.find(line)!!
@@ -301,6 +326,25 @@ object Parser {
                     continue@loop
                 }
                 line = match.groupValues[2]
+            }
+            if (line.matches(memoryExp)) {
+                val match = memoryExp.find(line)!!
+                val name = match.groupValues[1]
+                val offsetRegister = Register.OffsetRegister("&$name")
+                registers.put("&$name", offsetRegister)
+                if (match.groupValues[2].toIntOrNull() != null) {
+                    val sizeHint = match.groupValues[2].toInt()
+                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister, sizeHint))
+                    if (match.groupValues.size == 3 || match.groupValues.getOrNull(3)?.isBlank() == true) {
+                        continue@loop
+                    }
+                } else {
+                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister))
+                    if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
+                        continue@loop
+                    }
+                }
+                line = match.groupValues.last()
             }
             if (line.matches(labelExp)) {
                 val match = labelExp.find(line)!!

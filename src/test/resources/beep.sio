@@ -1,0 +1,5 @@
+
+@mov 7 acc
+@cst "c"
+mov acc stdout
+slp 5
