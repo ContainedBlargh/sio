@@ -2,7 +2,7 @@ $cnt # register for the total amount of increases.
 $prv # register for the previously recorded measurement
 
 # Disable clock
-# @mov -1 clk
+@mov -1 clk
 
 # Pre-fill prv with the highest possible number.
 @mov 1000 prv
@@ -14,9 +14,9 @@ mov stdin acc
 mov 1 stdin
 mov stdin null
 
-mov "read '" stdout
-mov acc stdout
-mov "'\n" stdout
+# mov "read '" stdout
+# mov acc stdout
+# mov "'\n" stdout
 
 teq acc null # check if acc is blank.
 + mov "total: " stdout
@@ -30,7 +30,5 @@ cst "i"
 # Test if acc is greater than prv
 tgt acc prv
 + mov acc prv
-+ mov cnt acc
-+ add 1
-+ mov acc cnt
++ inc cnt
 - mov acc prv

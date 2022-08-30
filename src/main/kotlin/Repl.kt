@@ -31,13 +31,10 @@ class Repl(
     fun loop() {
         println(
             """
-                Welcome to the sio repl!
+                Welcome to the SIO repl!
                 
                 Here you can execute sio instructions and define registers as you normally would.
                 However, jmp's are not supported, neither are channels.
-                
-                In order to allow multiple instructions, such as teq instructions, 
-                you must conclude a command with blank newline.
                 
                 Remember that you can use the `end` instruction to quit.
             """.trimIndent()
@@ -57,17 +54,22 @@ class Repl(
                     if (line.trim() == "#registers") {
                         println(registers.entries.joinToString("\n") { "${it.key}: ${it.value}" })
                     }
+                    if (line.trim().startsWith("$")) {
+                        val reg = line.split("#", ";").first().removePrefix("$")
+                        registers.put(reg, Register.PlainRegister(reg))
+                    }
                     if (!line.isBlank()) {
                         lines.add(line)
-                    } else {
+                    }
+                    if (!setOf("teq", "tlt", "tgt", "tcp", "+", "-").any { line.contains(it) }) {
                         break
                     }
                 }
                 val instructions = Parser.parseLines(registers, *lines.toTypedArray())
-                println(instructions)
                 for ((_, instruction) in instructions) {
                     runBlocking { instruction.modify(this@Repl) }
                 }
+                lines.clear()
                 println()
             } catch (exception: Exception) {
                 System.err.println(exception)

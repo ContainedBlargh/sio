@@ -142,13 +142,26 @@ sealed class Value {
             }
         }
 
+        private fun scale(s: String, f: Float): String {
+            var p = (f * s.length).toInt()
+            val builder = StringBuilder()
+            while (p > 0) {
+                val r = min(p, s.length)
+                for (i in 0 until r) {
+                    builder.append(s[i])
+                }
+                p -= r
+            }
+            return builder.toString()
+        }
+
         override fun times(value: Value): Value {
             return when (value) {
                 is RegisterRef -> this.times(value.flatten())
                 is SValue -> SValue(s.toCharArray().flatMap { i -> value.s.toCharArray().map { j -> "$i$j" } }
                     .fold("", String::plus))
 
-                is FValue -> SValue(s.repeat((value.f * s.length.toFloat()).toInt() / s.length))
+                is FValue -> SValue(scale(s, value.f))
                 is IValue -> SValue(s.repeat(value.i))
                 is NullValue -> SValue("")
             }
