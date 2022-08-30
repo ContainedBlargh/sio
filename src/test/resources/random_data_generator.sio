@@ -1,0 +1,56 @@
+$dat
+$x # how many values on each row
+$y # how many lines in total
+
+$n # line counter
+$i # value counter
+
+# Free clock!
+mov -1 clk
+
+# Generates random float values and writes them to stdout.
+
+# Provide the input spec
+mov "Please provide the data shape in the format 'x,y':\n> " stderr
+
+
+
+# Find out how many lines of how many dimensions we should produce.
+mov "," stdin
+mov stdin acc
+cst 0
+mov acc x
+mov 1 stdin
+mov stdin null
+mov "\n" stdin
+mov stdin acc
+cst 0
+mov acc y
+
+mov "Generating data(" stderr
+mov x stderr
+mov ", " stderr
+mov y stderr
+mov ") ...\n" stderr
+
+mov 0 n
+mov 0 i
+
+mov 1.0 rng # Set rng to generate floats
+mov "" acc
+inner:
+	tlt i x
++		mov rng stdout
++		inc i
+	teq i x
+-		mov "," stdout
+-		jmp inner
+
+outer:
+	inc n
+	tlt n y
++		mov "\n" stdout
++		mov 0 i
++		jmp inner
+
+end
