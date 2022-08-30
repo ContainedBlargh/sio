@@ -175,14 +175,15 @@ sealed class Register {
     data class Stdin(override val identifier: String = "stdin") : Register() {
         private val reader = System.`in`.bufferedReader()
         private var outBuffer = StringBuilder()
+        private var closed = false
 
         private fun prepare(i: Int) {
             try {
                 val buffer = CharArray(i)
                 val read = reader.read(buffer)
-                outBuffer.append(buffer.slice(0 until read))
+                outBuffer.append(buffer.slice(0 until read).toCharArray())
             } catch (_: Exception) {
-                outBuffer.append(0b0)
+                closed = true
             }
         }
 
@@ -192,28 +193,37 @@ sealed class Register {
                 val buffer = CharArray(pattern.length)
                 while (true) {
                     reader.mark(pattern.length * 2)
-                    reader.read(buffer)
+                    val read = reader.read(buffer)
+                    if (read < 1) {
+                        closed = true
+                        break
+                    }
                     if (buffer.contentEquals(patternArr)) {
                         reader.reset()
                         break
                     }
-                    outBuffer.append(buffer)
+                    outBuffer.append(buffer.slice(0 until read).toCharArray())
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                outBuffer.append(0b0)
+            } catch (_: Exception) {
+                closed = true
             }
         }
 
         override fun put(value: Value) {
-            when (value) {
-                is Value.SValue -> search(value.s)
-                else -> prepare(value.toInt().absoluteValue)
+            if (!closed) {
+                when (value) {
+                    is Value.SValue -> search(value.s)
+                    else -> prepare(value.toInt().absoluteValue)
+                }
             }
         }
 
         override fun get(): Value {
-            val out = Value.SValue(outBuffer.toString())
+            if (closed && outBuffer.isBlank()) {
+                return Value.NullValue()
+            }
+            val str = outBuffer.toString()
+            val out = Value.SValue(str)
             outBuffer.clear()
             return out
         }

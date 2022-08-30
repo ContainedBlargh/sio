@@ -73,7 +73,7 @@ sealed class Value {
             return when (value) {
                 is RegisterRef -> compareTo(value.flatten())
                 is NullValue -> 0
-                is SValue -> if (value.s.trim().isBlank()) 0 else -1
+                is SValue -> if (value.s.trim().isBlank() || value.s == "\u0000") 0 else -1
                 else -> -1
             }
         }
