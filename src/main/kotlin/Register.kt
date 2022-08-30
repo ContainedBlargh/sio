@@ -1,4 +1,3 @@
-import java.nio.CharBuffer
 import java.util.*
 import kotlin.math.absoluteValue
 import kotlin.math.max
@@ -174,28 +173,47 @@ sealed class Register {
     }
 
     data class Stdin(override val identifier: String = "stdin") : Register() {
-        private val reader = System.`in`.reader()
+        private val reader = System.`in`.bufferedReader()
         private var outBuffer = StringBuilder()
 
         private fun prepare(i: Int) {
             try {
-                val buffer = CharBuffer.allocate(i)
+                val buffer = CharArray(i)
                 val read = reader.read(buffer)
-                for (b in (0 until read).reversed()) {
-                    outBuffer.append(buffer.get(b))
-                }
+                outBuffer.append(buffer.slice(0 until read))
             } catch (_: Exception) {
                 outBuffer.append(0b0)
             }
         }
 
+        private fun search(pattern: String) {
+            try {
+                val patternArr = pattern.toCharArray()
+                val buffer = CharArray(pattern.length)
+                while (true) {
+                    reader.mark(pattern.length * 2)
+                    reader.read(buffer)
+                    if (buffer.contentEquals(patternArr)) {
+                        reader.reset()
+                        break
+                    }
+                    outBuffer.append(buffer)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                outBuffer.append(0b0)
+            }
+        }
+
         override fun put(value: Value) {
-            val inc = value.toInt().absoluteValue
-            prepare(inc)
+            when (value) {
+                is Value.SValue -> search(value.s)
+                else -> prepare(value.toInt().absoluteValue)
+            }
         }
 
         override fun get(): Value {
-            val out = Value.SValue(outBuffer.reversed().toString())
+            val out = Value.SValue(outBuffer.toString())
             outBuffer.clear()
             return out
         }

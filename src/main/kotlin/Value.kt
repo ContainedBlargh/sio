@@ -1,3 +1,4 @@
+import java.util.*
 import kotlin.experimental.inv
 import kotlin.math.max
 import kotlin.math.min
@@ -16,6 +17,7 @@ sealed class Value {
                             .replace("\\t", "\t")
                             .replace("\\r", "\r")
                     )
+
                 registers.containsKey(token) -> RegisterRef(registers[token]!!)
                 else -> throw NoWhenBranchMatchedException("Unknown token: '$token'")
             }
@@ -134,6 +136,7 @@ sealed class Value {
                     val r = max(it.last().toInt(), s.length)
                     SValue(s.slice(l until r))
                 }
+
                 is IValue -> SValue(s.slice(0 until min(value.i, s.length)))
                 is NullValue -> this
             }
@@ -144,6 +147,7 @@ sealed class Value {
                 is RegisterRef -> this.times(value.flatten())
                 is SValue -> SValue(s.toCharArray().flatMap { i -> value.s.toCharArray().map { j -> "$i$j" } }
                     .fold("", String::plus))
+
                 is FValue -> SValue(s.repeat((value.f * s.length.toFloat()).toInt() / s.length))
                 is IValue -> SValue(s.repeat(value.i))
                 is NullValue -> SValue("")
@@ -161,7 +165,7 @@ sealed class Value {
 
         override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.asString()))
 
-        override fun compareTo(value: Value): Int = when(value) {
+        override fun compareTo(value: Value): Int = when (value) {
             is RegisterRef -> compareTo(value.flatten())
             is NullValue -> value.compareTo(this)
             else -> s.compareTo(value.asString())
@@ -169,7 +173,7 @@ sealed class Value {
     }
 
     data class FValue(val f: Float) : Value() {
-        override fun asString() = "$f"
+        override fun asString() = String.format(Locale.ENGLISH, "%.8f", f)
         override fun toInt() = f.toInt()
         override fun toFloat() = f
         override fun flatten() = this

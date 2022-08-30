@@ -130,10 +130,6 @@ sealed class Instruction {
     }
 
     class Cst(val type: Value) : AccInstruction() {
-        companion object {
-
-        }
-
         override fun updateAcc(acc: Register.PlainRegister) {
             fun update(givenType: Value) {
                 when (givenType) {
@@ -145,6 +141,7 @@ sealed class Instruction {
                                 else -> acc.put(IValue(-1))
                             }
                         }
+
                         givenType.s == "i" -> acc.put(IValue(acc.get().toInt()))
                         givenType.s == "f" -> acc.put(FValue(acc.get().toFloat()))
                         givenType.s == "s" -> acc.put(SValue(acc.get().asString()))
@@ -153,8 +150,10 @@ sealed class Instruction {
                             val radix = str.toInt()
                             acc.put(IValue(acc.get().asString().toInt(radix)))
                         }.getOrNull() ?: throw IllegalArgumentException("Invalid cast: '${givenType.asString()}'")
+
                         else -> acc.put(SValue(acc.get().asString()))
                     }
+
                     is IValue -> acc.put(IValue(acc.get().toInt()))
                     is FValue -> acc.put(FValue(acc.get().toFloat()))
                     is NullValue -> acc.put(NullValue())

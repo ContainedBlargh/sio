@@ -111,7 +111,8 @@ object Parser {
             .map { it.replace("-", "", false).trimStart() }
         val negInstructions = neg.foldIndexed(emptyList<Instruction>()) { i, acc, line ->
             val tokens = splitIntoTokens(line.replace(minusExp) { it.groupValues[1] })
-            val instruction = parseInstruction(registers, jmpLabels, tokens.iterator(), negLines.drop(i + 1))
+            val remainingNegLines = negLines.drop(i + 1)
+            val instruction = parseInstruction(registers, jmpLabels, tokens.iterator(), remainingNegLines)
             acc + listOfNotNull(instruction)
         }
         return ctor(lVal, rVal, posInstructions, negInstructions)
