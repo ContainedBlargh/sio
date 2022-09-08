@@ -56,6 +56,7 @@ Luckily, I found this kotlin project in a dumpster outside a chinese-themed gril
   - Write to `rng` to seed a random generator. `mov` from the register to get a value! 
     Try different types to get different results!
   - Use the `xsz`, `ysz`, `gfx` and `pxl` registers to render simple raster graphics.
+    - Use the `kb0` emulated PowerChannel to consume keyboard codes (sent from the raster-window). 
 - End your program with the new `end` instruction.
 
 Unfortunately a lot of the documentation was in Zealandic(???) so I don't really know how everything works yet. 
