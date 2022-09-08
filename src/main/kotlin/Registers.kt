@@ -8,7 +8,7 @@ object Registers {
         Register.PlainRegister("acc"),
         Register.Stdout(),
         Register.Stdin(),
-        Register.StdErr(),
+        Register.Stderr(),
         Register.RandomRegister()
     ) + getGraphical()
 
