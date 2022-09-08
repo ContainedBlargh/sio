@@ -8,25 +8,27 @@ featured in [Zachtronics' Shenzhen I/O](https://www.zachtronics.com/shenzhen-io/
 Write your code in a `.sio` file:
 ```
 $x0 # What's this?
-# - It's a way to declare your own registers, if you need them.
+# - It's a way to declare your own registers, if you need them. 
+# This one refers to an XBus channel x0.
+
+$dat # This is another register. Registers that don't start with p or x are considered *plain registers*.
+# Registers that start with p refer to *power channels*, XBus- and Power channels can be used to send data between SIO-files (nodes).
 
 #run this once
 @mov 100 acc
-mov acc stdout # stdout? What's that?
+mov acc stdout
 # - stdout is a register that you can use to write to stdout :)
 # What does it write?
-# - whatever you give it. It can be string or it can be binary data. 
-#   It's just like stdout.
+# - whatever you give it. It can be string or it can be a number.
+#   It's kinda like the stdout you know from C.
 
 sub 1
 
-mov "\n" stdout # A string literal?
-# - exactly!
+mov "\n" stdout # A string literal!
 
 tlt acc 1
 + mov "done\n" stdout
-+ end # I can guess what this instruction does...
-# - yeah.
++ end # End the program.
 slp 1
 
 ```
@@ -37,7 +39,7 @@ I was looking for something novel that I can implement my solutions for the next
 I wanted to work with something as annoying and crazy as Shenzhen I/O!
 Luckily, I found this kotlin project in a dumpster outside a chinese-themed grill.
 
-## New Features
+## New Language Features
 
 - Dynamically typed values (yes, the language is now worse), *store types such as integers, floating point numbers and char strings!* wow
   - Cast values between the types using the `cst T` instruction. It operates on the `acc` register.
@@ -69,7 +71,9 @@ You need at least Java 8 to run it.
 
 Once you have it, you can run it like:
 
-`java -jar sio.jar <your .sio script>`
+`java -jar sio.jar <your .sio scripts>`
+
+That's right, you can run multiple .sio files at the same time. Commmunicating between those files is what the channels are for.
 
 There's also a native version for `amd64` linux. This has been compiled with Graalvm so maybe it's faster?
 However, It's uncertain if graphical sio applications work with the native build.
