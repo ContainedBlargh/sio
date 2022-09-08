@@ -11,8 +11,10 @@ $x0 # What's this?
 # - It's a way to declare your own registers, if you need them. 
 # This one refers to an XBus channel x0.
 
-$dat # This is another register. Registers that don't start with p or x are considered *plain registers*.
-# Registers that start with p refer to *power channels*, XBus- and Power channels can be used to send data between SIO-files (nodes).
+$dat # This is another register. 
+# Registers that don't start with p or x are considered *plain registers*.
+# Registers that start with p refer to *power channels*, 
+# XBus- and Power channels can be used to send data between SIO-files (nodes).
 
 #run this once
 @mov 100 acc
