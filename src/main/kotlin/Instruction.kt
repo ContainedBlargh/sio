@@ -180,7 +180,7 @@ sealed class Instruction {
             if (ref !is RegisterRef) {
                 throw IllegalArgumentException("Cannot decrement a non-register!")
             }
-            val next = ref.lookup() - IValue(-1)
+            val next = ref.lookup() - IValue(1)
             acc.put(next)
             ref.register.put(next)
         }
