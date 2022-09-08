@@ -1,5 +1,7 @@
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 
 class Node(
     private val name: String,
@@ -32,7 +34,10 @@ class Node(
     override suspend fun sleep(duration: Int) {
         if (clock.active) {
             val speed = registers["clk"]?.get()?.toInt() ?: 500
-            delay(duration * 1000L / speed)
+            val wait = (duration * 1000000000L / speed).nanoseconds
+            if (wait > 15L.milliseconds) {
+                Thread.sleep(wait.inWholeMilliseconds)
+            }
         }
     }
 
@@ -41,7 +46,10 @@ class Node(
         while (running.get()) {
             if (clock.active) {
                 val speed = clock.get().toInt()
-                timer = async { delay(1000L / speed) }
+                val wait = (1000000000L / speed).nanoseconds
+                timer = async { // Turns out that the coroutine delay-function has terrible accuracy.
+                    Thread.sleep(wait.inWholeMilliseconds)
+                }
             }
             if (programPosition in disabledPositions) {
                 programPosition = (programPosition + 1) % instructionList.size
