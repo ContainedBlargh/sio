@@ -200,12 +200,15 @@ sealed class Register {
         abstract fun write(s: String)
         override fun put(value: Value) {
             val s = value.asString()
+            if (tapeMemory.size >= 32) {
+                tapeMemory.removeFirst()
+            }
             tapeMemory.addLast(s)
             write(s)
         }
 
         override fun get(): Value {
-            return (tapeMemory.pollLast() ?: "").let(Value::SValue)
+            return (tapeMemory.pollLast())?.let(Value::SValue) ?: Value.NullValue()
         }
     }
 
@@ -275,7 +278,7 @@ sealed class Register {
         }
     }
 
-    data class StdErr(override val identifier: String = "stderr") : TapeRegister() {
+    data class Stderr(override val identifier: String = "stderr") : TapeRegister() {
         private val writer = System.err.bufferedWriter()
         override fun write(s: String) {
             writer.write(s)
