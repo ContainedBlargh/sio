@@ -13,7 +13,7 @@ class Repl(
     }
 
     override fun getRegister(identifier: String): Register {
-        return registers.get(identifier)!!
+        return registers[identifier]!!
     }
 
     override fun jumpTo(label: String) {

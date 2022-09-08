@@ -1,0 +1,20 @@
+# Async programming with multiple nodes.
+
+# Please multiply my number by some value.
+
+$p0 #OUT
+$x1 #IN
+
+mov "Please write a number and I will square it, I promise!\n> " stdout
+mov "\n" stdin
+mov stdin acc
+teq acc null
+- cst "i"
+- mov "All right, I'll try squaring '" stdout
+- mov acc stdout
+- mov "'.\n" stdout
+- mov acc p0 #Put the number on p0 and hope that someone picks it up.
+- slx x1 #Man, I sure hope something will compute that square and return it.
+- mov "I did it, here you go: " stdout
+- mov x1 stdout
+- mov "\n" stdout

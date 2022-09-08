@@ -53,8 +53,25 @@ object Parser {
         return ctor(fVal, sVal, tVal)
     }
 
+    private fun noComments(line: String): String {
+        val (_, splitPoints) = line.toCharArray().foldIndexed(false to emptyList<Int>()) { i, acc, c ->
+            val inString = acc.first
+            val indices = acc.second
+            when {
+                !inString && c == '"' || c == '\'' -> true to indices
+                inString && c == '"' || c == '\'' -> false to indices
+                !inString && c == '#' || c == ';' -> false to (indices + i)
+                else -> acc
+            }
+        }
+        if (splitPoints.isEmpty()) {
+            return line.trim()
+        }
+        return line.substring(0, splitPoints.first()).trim()
+    }
+
     private fun splitIntoTokens(line: String): List<String> {
-        val noComments = line.split("#", ";").first().trim()
+        val noComments = noComments(line)
         val noAts = noComments.replace("@", "")
         return tokenExp.findAll(noAts).map { it.groupValues[0] }.toList()
     }
@@ -239,12 +256,12 @@ object Parser {
                 registers.put("&$name", offsetRegister)
                 if (match.groupValues[2].toIntOrNull() != null) {
                     val sizeHint = match.groupValues[2].toInt()
-                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister, sizeHint))
+                    registers.put("*$name", Register.SizedMemoryRegister("*$name", offsetRegister, sizeHint))
                     if (match.groupValues.size == 3 || match.groupValues.getOrNull(3)?.isBlank() == true) {
                         continue@loop
                     }
                 } else {
-                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister))
+                    registers.put("*$name", Register.UnsizedMemoryRegister("*$name", offsetRegister))
                     if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
                         continue@loop
                     }
@@ -263,7 +280,7 @@ object Parser {
                 }
                 line = match.groupValues[2]
             }
-            val noComments = line.split("#", ";").first().trim()
+            val noComments = noComments(line)
             val runOnce = noComments.startsWith("@")
             val noAts = noComments.replace("@", "")
             val tokens = tokenExp.findAll(noAts).map { it.groupValues[0] }.toList()
@@ -336,12 +353,12 @@ object Parser {
                 registers.put("&$name", offsetRegister)
                 if (match.groupValues[2].toIntOrNull() != null) {
                     val sizeHint = match.groupValues[2].toInt()
-                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister, sizeHint))
+                    registers.put("*$name", Register.SizedMemoryRegister("*$name", offsetRegister, sizeHint))
                     if (match.groupValues.size == 3 || match.groupValues.getOrNull(3)?.isBlank() == true) {
                         continue@loop
                     }
                 } else {
-                    registers.put("*$name", Register.MemoryRegister("*$name", offsetRegister))
+                    registers.put("*$name", Register.UnsizedMemoryRegister("*$name", offsetRegister))
                     if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
                         continue@loop
                     }
@@ -360,7 +377,7 @@ object Parser {
                 }
                 line = match.groupValues[2]
             }
-            val noComments = line.split("#", ";").first().trim()
+            val noComments = noComments(line)
             val runOnce = noComments.startsWith("@")
             val noAts = noComments.replace("@", "")
             val tokens = tokenExp.findAll(noAts).map { it.groupValues[0] }.toList()

@@ -13,8 +13,6 @@ mov -1 clk
 # Provide the input spec
 mov "Please provide the data shape in the format 'x,y':\n> " stderr
 
-
-
 # Find out how many lines of how many dimensions we should produce.
 mov "," stdin
 mov stdin acc

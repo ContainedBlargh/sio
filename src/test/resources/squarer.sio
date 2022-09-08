@@ -1,0 +1,23 @@
+$p0 #IN
+$x1 #OUT
+$dat
+$i
+
+# Squares stuff.
+tgt p0 0
++ mov p0 dat
++ mov dat acc
++ mov 0 p0
+- jmp skip
+
+mov 0 i
+square:
+	teq i dat
+	-	mul dat
+	-	inc i
+
+mov acc x1
+	
+skip:
+# Just let it fly past ...
+	nop

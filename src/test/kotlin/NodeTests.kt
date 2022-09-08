@@ -75,4 +75,12 @@ class NodeTests {
             node.start().join()
         }
     }
+
+    @Test
+    fun `Test gfx register`() {
+        val node = Parser.parseFromPath(getResourceFilePath("drawing.sio"))
+        runBlocking {
+            node.start().join()
+        }
+    }
 }

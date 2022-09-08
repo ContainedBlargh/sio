@@ -1,0 +1,73 @@
+$dat
+$mvn
+
+$ptr # Pointer 	color.
+$trl # Trail color 	1.
+$blk # black 2.
+
+@mov 985 clk # Set clock to 985 Hz
+@mov 45 xsz
+@mov 35 ysz
+@mov 1 gfx
+@mov 0 dat
+# Draw something
+
+# Setup starting location
+@mov 787 acc
+@mov acc &pxl
+
+# Setup color.
+@mov "#FFFFFF" ptr
+@mov "#A1A1A1" trl
+@mov "#000000" blk
+
+@mov ptr *pxl
+@mov 0 gfx
+
+mov kb0 dat
+teq dat null
++ jmp fin
+- slp 50
+
+teq dat 122 #F11
++ mov 2 gfx # Toggle fullscreen.
+
+teq dat 27 #ESC
++ end
+
+teq dat 37 #LEFT
++ mov -1 mvn
++ jmp move
+
+teq dat 38 #UP
++ mov -45 mvn
++ jmp move
+
+teq dat 39 #RIGHT
++ mov 1 mvn
++ jmp move
+
+teq dat 40 #DOWN
++ mov 45 mvn
++ jmp move
+
+teq dat 67 # C - change color
++ swp trl blk
++ jmp fin
++ slp 60 # Sleep to avoid swapping multiple times.
+
+mov "unknown keypress: " stdout
+mov dat stdout
+mov "\n" stdout
+
+jmp fin
+
+move:
+	mov acc &pxl
+	mov trl *pxl
+	add mvn
+	mov acc &pxl
+	mov ptr *pxl
+
+fin:
+	mov 0 gfx

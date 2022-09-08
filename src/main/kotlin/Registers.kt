@@ -6,10 +6,29 @@ object Registers {
         Register.NullRegister(),
         Register.ClockRegister(),
         Register.PlainRegister("acc"),
-//        Register.StackRegister(),
         Register.Stdout(),
         Register.Stdin(),
         Register.StdErr(),
         Register.RandomRegister()
-    )
+    ) + getGraphical()
+
+    fun getGraphical(): List<Register> {
+        //Add graphics registers...
+        val width = 800
+        val height = 600
+        val x = Register.PlainRegister("xsz", Value.IValue(width))
+        val y = Register.PlainRegister("ysz", Value.IValue(height))
+        val pixelsOffset = Register.OffsetRegister("&pxl")
+        val pixelsMemory = Register.SizedMemoryRegister("*pxl", pixelsOffset, width * height)
+        val keyboardChannel = PowerChannel()
+        val keyboardPinRegister = Register.PinRegister("kb0", keyboardChannel)
+        return listOf(
+            x,
+            y,
+            pixelsOffset,
+            pixelsMemory,
+            keyboardPinRegister,
+            Register.GfxRegister(x, y, pixelsOffset, pixelsMemory, keyboardChannel)
+        )
+    }
 }

@@ -1,7 +1,8 @@
+import java.awt.Color
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import java.util.*
 import kotlin.math.absoluteValue
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.random.Random
 
 sealed class Register {
@@ -92,7 +93,7 @@ sealed class Register {
         var active = true
         override fun put(value: Value) {
             active = value.toInt() != -1
-            max(min(value.toInt(), 1), 1000)
+            clockSpeed = value.toInt().coerceIn(1, 6000)
         }
 
         override fun get(): Value = Value.IValue(clockSpeed)
@@ -119,22 +120,67 @@ sealed class Register {
         }
     }
 
-    class MemoryRegister(
+    class SizedMemoryRegister(
         override val identifier: String,
         private val offsetRegister: OffsetRegister,
-        sizeHint: Int = 8
+        private val size: Int
     ) : Register() {
-        private val memory = ArrayList<Value>(sizeHint)
+        private var memory = Array<Value>(size) { _ -> Value.NullValue() }
 
-        init {
-            while (memory.size <= sizeHint) {
-                memory.add(Value.NullValue())
+        private fun getIndex(): Int {
+            val offset = offsetRegister.offset
+            return when {
+                offset == memory.size -> 0
+                offset > memory.size -> offset % memory.size
+                offset < 0 -> run {
+                    val negative = (offset * -1) % memory.size
+                    memory.size - negative
+                }
+                else -> offset
             }
         }
 
         override fun put(value: Value) {
+            val index = getIndex()
+            try { //TODO: This shouldn't be necessary, but there's an error in the getIndex() function.
+                memory[index] = value
+                offsetRegister.offset = index
+            } catch (e: ArrayIndexOutOfBoundsException) {
+                memory[0] = value
+                offsetRegister.offset = 0
+            }
+        }
+
+        override fun get(): Value {
+            val index = getIndex()
+            val value = memory[index]
+            offsetRegister.offset = index
+            return value
+        }
+
+        fun resize(newSize: Int) {
+            memory = Array(newSize) {
+                if (it < memory.size) {
+                    memory[it]
+                } else {
+                    Value.NullValue()
+                }
+            }
+        }
+    }
+
+    class UnsizedMemoryRegister(
+        override val identifier: String,
+        private val offsetRegister: OffsetRegister
+    ) : Register() {
+        private val memory = ArrayList<Value>(0)
+
+        override fun put(value: Value) {
             while (memory.size <= offsetRegister.offset) {
                 memory.add(Value.NullValue())
+            }
+            if (offsetRegister.offset < 0) {
+                offsetRegister.offset += memory.size
             }
             memory[offsetRegister.offset] = value
         }
@@ -234,6 +280,119 @@ sealed class Register {
         override fun write(s: String) {
             writer.write(s)
             writer.flush()
+        }
+    }
+
+    class GfxRegister(
+        private val xSizeRegister: PlainRegister,
+        private val ySizeRegister: PlainRegister,
+        private val pixelsOffset: OffsetRegister,
+        private val pixelsMemory: SizedMemoryRegister,
+        private val keyboardChannel: PowerChannel,
+        override val identifier: String = "gfx"
+    ) : Register() {
+        private var raster: Raster? = null
+
+        private fun intToColor(i: Int): Color {
+            if (i in 100..999) { //Assume that we want three colors.
+                val s = i.toString()
+                val r = s[0].digitToInt() / 9.0f
+                val g = s[1].digitToInt() / 9.0f
+                val b = s[2].digitToInt() / 9.0f
+                return Color(r, g, b)
+            }
+            val candidate = Result.runCatching { Color(i) }.getOrNull()
+            if (candidate != null) {
+                return candidate
+            }
+            return Color.BLACK
+        }
+
+        private fun stringToColor(s: String): Color {
+            val sysColor = Color.getColor(s)
+            if (sysColor != null) {
+                return sysColor
+            }
+            val candidate = s.lowercase().removePrefix("#").let { Color.decode("#$it") }
+            if (candidate != null) {
+                return candidate
+            }
+            return Color.BLACK
+        }
+
+        private fun valueToColor(value: Value): Color =
+            when (value) {
+                is Value.IValue -> intToColor(value.i)
+                is Value.FValue -> (value.f).absoluteValue.let { Color(it, it, it) }
+                is Value.SValue -> stringToColor(value.s)
+                else -> Color.BLACK
+            }
+
+        private fun refresh() {
+            val xSize = xSizeRegister.get().toInt()
+            val ySize = ySizeRegister.get().toInt()
+            val before = pixelsOffset.get()
+            for (y in 0 until ySize) {
+                for (x in 0 until xSize) {
+                    val pos = x + y * xSize
+                    pixelsOffset.put(Value.IValue(pos))
+                    val value = pixelsMemory.get()
+                    val color = valueToColor(value)
+                    raster?.set(x, y, color)
+                }
+            }
+            pixelsOffset.put(before)
+            raster?.refresh()
+        }
+
+        override fun put(value: Value) {
+            val i = value.toInt()
+            when (i) {
+                2 -> run {
+                    raster?.isFullscreen = !(raster?.isFullscreen ?: false)
+                }
+
+                1 -> run {
+                    if (raster == null) {
+                        val x = xSizeRegister.get().toInt()
+                        val y = ySizeRegister.get().toInt()
+                        pixelsMemory.resize(x * y)
+                        val r = Raster(x, y)
+                        r.isVisible = true
+                        r.addKeyListener(object : KeyListener {
+                            override fun keyTyped(e: KeyEvent?) {
+                                e?.consume()
+                            }
+
+                            override fun keyPressed(e: KeyEvent?) {
+                                e?.apply {
+                                    keyboardChannel.send(Value.IValue(e.keyCode))
+                                }
+                                e?.consume()
+                            }
+
+                            override fun keyReleased(e: KeyEvent?) {
+                                keyboardChannel.send(Value.NullValue())
+                                e?.consume()
+                            }
+                        })
+                        raster = r
+                    } else {
+                        refresh()
+                    }
+                }
+
+                0 -> refresh()
+                -1 -> raster?.close()
+            }
+        }
+
+        override fun get(): Value {
+            if (raster == null) {
+                return Value.IValue(-1)
+            } else {
+                return Value.IValue(1)
+            }
         }
     }
 }

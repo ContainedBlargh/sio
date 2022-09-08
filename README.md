@@ -1,6 +1,6 @@
 # SIO - A variant of the MCxxxx programming language from Shenzhen I/O™
 
-This implementation is a runtime / VM / interpreter that parses and runs an extension of the stack programming language
+This implementation is a runtime / VM / interpreter that parses and runs an extension of the programming language
 featured in [Zachtronics' Shenzhen I/O](https://www.zachtronics.com/shenzhen-io/).
 
 ## Example
@@ -44,18 +44,21 @@ Luckily, I found this kotlin project in a dumpster outside a chinese-themed gril
   - All the `acc`-related instructions such as `acc`, `add`, `sub` & `mul` apply to all the types, try them out!
   - Test-instructions are also applicable.
 - Declare your own registers at the beginning of a file by writing `$name`. Use these to store values. XBus and simple I/O registers are used for passing values between multiple nodes, so the prefixes `x`and `p` should be for those types of registers only. You still have to declare them and the order of the declarations determine the identity of each port.
+- Memory! Declare sequences of memory as special registers. 
+  - Comes in a sized variant (`*name[10]` makes a memory register, 10 values long) and an unsized, infinite, variant (`*name`).
+  - Change the element referenced by `mov`'ing to the accompanying `&`-register, (`&name` for both previous examples). 
 - Use the new built-in registers!
-  - Set a clock-speed by writing to the `clk`-register. Write `-1` to enable overclocking (makes it go faster by disabling
-    timing entirely)
+  - Set a clock-speed in Hz by `mov`ing to the `clk`-register. `mov -1 clk` to enable overclocking (makes it go faster🔥🔥🔥)
   - Read from `stdin` by requesting `n` characters by `mov`ing to the `stdin` register.
     Then, you can access the values by `mov`ing from the register.
   - Write to `stdout` by `mov`ing to the `stdout` register. Read back what you wrote by moving *from* stdout (???)
   - Write to `stderr` by `mov`ing to the `stderr` register.
   - Write to `rng` to seed a random generator. `mov` from the register to get a value! 
     Try different types to get different results!
+  - Use the `xsz`, `ysz`, `gfx` and `pxl` registers to render simple raster graphics.
 - End your program with the new `end` instruction.
 
-Unfortunately a lot of the documentation was in Italian(???) so I don't really know how everything works yet. 
+Unfortunately a lot of the documentation was in Zealandic(???) so I don't really know how everything works yet. 
 
 ## Using the program
 
@@ -65,6 +68,21 @@ You need at least Java 8 to run it.
 Once you have it, you can run it like:
 
 `java -jar sio.jar <your .sio script>`
+
+There's also a native version for `amd64` linux. This has been compiled with Graalvm so maybe it's faster?
+However, It's uncertain if graphical sio applications work with the native build.
+
+## Enabling graphics
+
+![SIO's `gfx` register in action](drawing.gif)
+
+I found a raster-graphics-extension for SIO on a now-defunct meme forum, 
+one of the users were using it as the background for the avatar.
+It's interesting to play with, so I've merged it into the existing code. 
+It's using the state-of-the-art Java Abstract Window Toolkit (AWT) to render graphics, 
+so it should be available for graphics-enabled Java installations.
+
+[I wrote an example application (viewed above).](src/test/resources/drawing.sio)
 
 ## Other examples
 
