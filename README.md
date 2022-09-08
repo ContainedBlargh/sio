@@ -51,6 +51,7 @@ Luckily, I found this kotlin project in a dumpster outside a chinese-themed gril
   - Set a clock-speed in Hz by `mov`ing to the `clk`-register. `mov -1 clk` to enable overclocking (makes it go faster🔥🔥🔥)
   - Read from `stdin` by requesting `n` characters by `mov`ing to the `stdin` register.
     Then, you can access the values by `mov`ing from the register.
+      - Read until a specific pattern by `mov`ing the pattern string into stdin. Useful for reading line-by-line.
   - Write to `stdout` by `mov`ing to the `stdout` register. Read back what you wrote by moving *from* stdout (???)
   - Write to `stderr` by `mov`ing to the `stderr` register.
   - Write to `rng` to seed a random generator. `mov` from the register to get a value! 
