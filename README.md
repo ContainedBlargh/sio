@@ -85,7 +85,7 @@ However, It's uncertain if graphical sio applications work with the native build
 ![SIO's `gfx` register in action](drawing.gif)
 
 I found a raster-graphics-extension for SIO on a now-defunct meme forum, 
-one of the users were using it as the background for the avatar.
+one of the users was using it as the background for the avatar.
 It's interesting to play with, so I've merged it into the existing code. 
 It's using the state-of-the-art Java Abstract Window Toolkit (AWT) to render graphics, 
 so it should be available for graphics-enabled Java installations.
