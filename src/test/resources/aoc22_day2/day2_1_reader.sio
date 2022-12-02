@@ -1,34 +1,44 @@
+$p0
+$p1
 $dat
-$x0
 
 @mov -1 clk
 
 mov 1 stdin
 mov stdin dat
 
+teq dat "\n"
++ jmp skip
+
 teq dat null
-+ mov -1 x0 # tell the scorer to end
-+ mov 100 clk
-+ nop
++ mov -1 p0 # emit EOF
 + end
 
-mov 10 acc # default (0) is paper.
+mov 22 acc # default(1) is paper
 
 tcp dat "B"
-+ add 2 # 2 is scissors
-- add 1 # 1 is rock
++ add 1 # 3 is scissors
+- sub 1 # 1 is rock
 
-mov 1 stdin # discard whitespace
+mov 1 stdin # discard ' '
 mov stdin null
 
 mov 1 stdin
 mov stdin dat
 
-mov 1 stdin # discard newline
+mov 1 stdin # discard \n
 mov stdin null
 
 tcp dat "Y"
-+ add 20
-- add 10
++ add 10 # 3x you picked scissors
+- sub 10 # 1x you picked rock
 
-mov acc x0 # send it to the scorer.
+mov acc p0 # send it to scorer
+wait:
+	teq p1 1 # wait until 1
+	- jmp wait
+
+mov 0 p1 # reset pin
+
+skip:
+	nop
