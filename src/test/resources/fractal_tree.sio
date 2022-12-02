@@ -1,0 +1,73 @@
+# A program that draws a fractal tree?
+
+# Used to return from the function. 
+# If only one could jmp to line numbers in SIO...
+$_rtr 
+
+# Division
+$_a
+$_b
+$_q
+
+# Line plotting
+$_dat
+$_x1
+$_x2
+$_y1
+$_y2
+$_slp
+
+$pi
+$rad2deg
+$deg2rad
+
+$ang
+$shr
+$len
+$lvl
+
+
+$maxlvl	# Maximum recursion depth, we set this to 10.
+$xs[10]	# Array for storing all the x-values of our coordinates.
+$ys[10] # Array for storing all the y-values of our coordinates.
+
+
+@mov 3.14159 pi
+@mov 57.2957 rad2deg
+@mov 0.01745 deg2rad
+@mov 0 lvl
+@mov 10 maxlvl
+@mov 985 clk
+@mov 280 xsz
+@mov 140 ysz
+@mov 1 gfx
+
+ 
+# Plot line
+plot:
+	mov acc _dat
+	
+	# Compute slope
+	mov _x2 acc
+	cst "f"
+	sub _x1
+	mov acc _slp
+	
+	mov _y2 acc
+	cst "f"
+	sub _y1
+	div _slp
+	swp acc _slp
+	
+	# Compute x-steps
+	mov _x2 acc
+	sub _x1
+	plot_sub:
+		mov 
+	
+	mov _dat acc
+
+# Return to plotting point
+rtr:
+	teq $_rtr 0
+	+ jmp 

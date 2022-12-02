@@ -83,4 +83,9 @@ class NodeTests {
             node.start().join()
         }
     }
+
+    @Test
+    fun `Test day2 reader`() {
+        val node = Parser.parseFromPath(getResourceFilePath("day2_1_reader.sio"))
+    }
 }

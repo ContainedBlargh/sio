@@ -43,6 +43,7 @@ sealed class Value {
     abstract operator fun plus(value: Value): Value
     abstract operator fun minus(value: Value): Value
     abstract operator fun times(value: Value): Value
+    abstract operator fun div(value: Value): Value
     abstract operator fun not(): Value
     abstract fun dgt(i: Int): Value
     abstract fun dst(i: Int, v: Value): Value
@@ -62,6 +63,8 @@ sealed class Value {
         override fun minus(value: Value): Value = this
 
         override fun times(value: Value): Value = this
+
+        override fun div(value: Value): Value = this
 
         override fun not(): Value = this
 
@@ -103,6 +106,12 @@ sealed class Value {
             return lVal * rVal
         }
 
+        override fun div(value: Value): Value {
+            val lVal = this.flatten()
+            val rVal = this.flatten()
+            return lVal / rVal
+        }
+
         override fun not() = flatten().not()
 
         override fun dgt(i: Int) = flatten().dgt(i)
@@ -114,7 +123,7 @@ sealed class Value {
 
     data class SValue(val s: String) : Value() {
         override fun asString() = s
-        override fun toInt() = s.trim().toIntOrNull() ?: 0
+        override fun toInt() = s.trim().toIntOrNull() ?: s.singleOrNull()?.code ?: 0
         override fun toFloat() = s.toFloatOrNull() ?: 0f
         override fun flatten() = this
         override fun plus(value: Value): Value {
@@ -167,6 +176,8 @@ sealed class Value {
             }
         }
 
+        override fun div(value: Value): Value = this
+
         override fun not(): Value {
             return SValue(s.toCharArray().map { it.code.toByte().inv() }.map { it.toInt().toChar() }
                 .fold("", String::plus))
@@ -193,6 +204,8 @@ sealed class Value {
         override fun plus(value: Value) = FValue(f + value.toFloat())
         override fun minus(value: Value) = FValue(f - value.toFloat())
         override fun times(value: Value) = FValue(f * value.toFloat())
+        override fun div(value: Value) = FValue(f / value.toFloat())
+
         override fun not(): Value {
             return IValue(if (f.toInt() != 0) 0 else 100)
         }
@@ -213,6 +226,7 @@ sealed class Value {
         override fun plus(value: Value) = IValue(i + value.toInt())
         override fun minus(value: Value) = IValue(i - value.toInt())
         override fun times(value: Value) = IValue(i * value.toInt())
+        override fun div(value: Value) = IValue(i * value.toInt())
         override fun not(): Value {
             return IValue(if (i == 0) 100 else 0)
         }

@@ -111,6 +111,12 @@ sealed class Instruction {
         }
     }
 
+    data class Div(val operand: Value): AccInstruction() {
+        override fun updateAcc(acc: Register.PlainRegister) {
+            acc.put(acc.get() / operand)
+        }
+    }
+
     class Not : AccInstruction() {
         override fun updateAcc(acc: Register.PlainRegister) {
             acc.put(acc.get().not())
@@ -224,9 +230,11 @@ sealed class Instruction {
     }
 
     class Tcp(
-        val left: Value, val right: Value, val positive: List<Instruction>, val negative: List<Instruction>
-    ) : Instruction() {
+        val left: Value, val right: Value, positive: List<Instruction>, negative: List<Instruction>
+    ) : TestInstruction(positive, negative) {
         override fun toString(): String = "Tcp($left, $right)"
+        override fun test(): Boolean = false; //Override the usual behaviour.
+
         override suspend fun modify(executable: Executable) {
             if (left > right) {
                 positive.forEach { it.modify(executable) }

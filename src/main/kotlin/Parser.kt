@@ -185,6 +185,7 @@ object Parser {
             "add" -> parseMonOp(registers, tokenIterator, ::Add)
             "sub" -> parseMonOp(registers, tokenIterator, ::Sub)
             "mul" -> parseMonOp(registers, tokenIterator, ::Mul)
+            "div" -> parseMonOp(registers, tokenIterator, ::Div)
             "not" -> Not()
             "cst" -> parseMonOp(registers, tokenIterator, ::Cst)
             "inc" -> parseMonOp(registers, tokenIterator, ::Inc)
