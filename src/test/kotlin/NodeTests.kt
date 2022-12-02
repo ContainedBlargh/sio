@@ -86,11 +86,16 @@ class NodeTests {
 
     @Test
     fun `Test aoc2`() {
-        val reader = Parser.parseFromPath(getResourceFilePath("day2/day2_1_reader.sio"))
-        val scorer = Parser.parseFromPath(getResourceFilePath("day2/day2_1_scorer.sio"))
-        val jobs = listOf(reader, scorer).map { it.start() }
-        val input = Files.newInputStream(Paths.get(getResourceFilePath("day2/test.txt")))
+        val folder = "aoc22_day2"
+        val input = Files.newInputStream(Paths.get(getResourceFilePath("$folder/test.txt")))
         System.setIn(input)
+        val reader = Parser.parseFromPath(getResourceFilePath("$folder/day2_1_reader.sio"))
+        val tracker = Parser.parseFromPath(getResourceFilePath("$folder/day2_1_tracker.sio"))
+        val scorer = Parser.parseFromPath(getResourceFilePath("$folder/day2_1_scorer.sio"))
+        val jobs = listOf(reader, tracker, scorer).map { it.start() }
+        for (job in jobs) {
+            runBlocking { job.start() }
+        }
         for (job in jobs) {
             runBlocking { job.join() }
         }

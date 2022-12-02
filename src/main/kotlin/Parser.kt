@@ -204,8 +204,8 @@ object Parser {
         return inst
     }
 
-    private val pinExp = Regex("^\\$([px][0-9]+[0-9a-zA-Z]*)\\s?(.*)$")
-    private val xBusExp = Regex("^\\$(x[0-9]+[0-9a-zA-Z]*)\\s?(.*)\$")
+    private val pinExp = Regex("^\\$[px]([0-9]+)\\s?(.*)$")
+    private val xBusExp = Regex("^\\$(x[0-9]+)\\s?(.*)\$")
     private val registerExp = Regex("^\\$([a-zA-Z0-9]+)\\s?(.*)\$")
     private val memoryExp = Regex("^[*&]([a-zA-Z0-9]+)(?:\\[(\\d+)\\])?\\s?(.*)$")
     private val labelExp = Regex("^([a-zA-Z_\\-]+[a-zA-Z0-9_\\-]*):\\s*(.*)\$")
@@ -219,7 +219,6 @@ object Parser {
         val lineIterator = lines.iterator()
         val instructionList = mutableListOf<Pair<Boolean, Instruction>>()
         val jmpTable = mutableMapOf<String, Int>()
-        var pinId = 0;
         var i = 0
         loop@ while (lineIterator.hasNext()) {
             var line = lineIterator.next().trim()
@@ -228,12 +227,12 @@ object Parser {
             if (line.matches(pinExp)) {
                 val isXbus = xBusExp.matches(line)
                 val match = pinExp.find(line)!!
-                val name = match.groupValues[1]
+                val number = match.groupValues[1].toInt()
+                val pinLabel = (if (isXbus) "x" else "p") + number
                 registers.put(
-                    name, Register.PinRegister(
-                        name,
-                        Pins.getPinChannel(pinId++, isXbus)
-                            ?: throw ParserException("Pin register mismatch! Check the type of $name!")
+                    pinLabel, Register.PinRegister(
+                        pinLabel,
+                        Pins.getPinChannel(number, isXbus)
                     )
                 )
                 if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {
@@ -316,7 +315,6 @@ object Parser {
         val instructionList = mutableListOf<Pair<Boolean, Instruction>>()
         val registers = Registers.getDefault().associateBy { it.identifier }.toMutableMap()
         val jmpTable = mutableMapOf<String, Int>()
-        var pinId = 0;
         var i = 0
         loop@ while (lineIterator.hasNext()) {
             var line = lineIterator.next().trim()
@@ -325,12 +323,12 @@ object Parser {
             if (line.matches(pinExp)) {
                 val isXbus = xBusExp.matches(line)
                 val match = pinExp.find(line)!!
-                val name = match.groupValues[1]
+                val number = match.groupValues[1].toInt()
+                val pinLabel = (if (isXbus) "x" else "p") + number
                 registers.put(
-                    name, Register.PinRegister(
-                        name,
-                        Pins.getPinChannel(pinId++, isXbus)
-                            ?: throw ParserException("Pin register mismatch! Check the type of $name!")
+                    pinLabel, Register.PinRegister(
+                        pinLabel,
+                        Pins.getPinChannel(number, isXbus)
                     )
                 )
                 if (match.groupValues.size == 1 || match.groupValues[2].isBlank()) {

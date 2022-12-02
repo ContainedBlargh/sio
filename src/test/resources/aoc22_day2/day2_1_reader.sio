@@ -1,0 +1,34 @@
+$dat
+$x0
+
+@mov -1 clk
+
+mov 1 stdin
+mov stdin dat
+
+teq dat null
++ mov -1 x0 # tell the scorer to end
++ mov 100 clk
++ nop
++ end
+
+mov 10 acc # default (0) is paper.
+
+tcp dat "B"
++ add 2 # 2 is scissors
+- add 1 # 1 is rock
+
+mov 1 stdin # discard whitespace
+mov stdin null
+
+mov 1 stdin
+mov stdin dat
+
+mov 1 stdin # discard newline
+mov stdin null
+
+tcp dat "Y"
++ add 20
+- add 10
+
+mov acc x0 # send it to the scorer.

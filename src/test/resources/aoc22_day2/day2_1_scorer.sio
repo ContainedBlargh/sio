@@ -1,0 +1,29 @@
+$x0
+$x1
+$dat
+@mov -1 clk
+slx x1
+mov x1 dat  # rock, no multiplier
+
+mov x1 acc  # paper, mul 2
+mul 2       #
+swp acc dat # acc = x1 * 2
+add dat     # acc = acc + dat
+mov acc dat # dat = acc
+
+mov x1 acc  # scissors & draws, mul 3
+add x1
+mul 3
+swp acc dat
+add dat
+mov acc dat
+
+mov x1 acc  # wins, mul 6
+mul 6
+swp acc dat
+add dat
+
+mov acc stdout
+mov "\n" stdout
+
+end

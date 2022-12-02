@@ -1,0 +1,72 @@
+$x0
+$x1
+$dat
+$own
+$opt
+$roc
+$pap
+$sci
+$win
+$drw
+
+@mov -1 clk
+mov 0 own
+mov 0 opt
+
+slx x0
+mov x0 dat
+mov 0 acc
+
+teq dat -1
++ mov roc x1
++ mov pap x1
++ mov sci x1
++ mov drw x1
++ mov win x1
++ end
+
+teq dat 0
++ inc drw
++ mov 0 acc
+
+mov dat acc
+dgt 1
+swp acc own
+
+mov dat acc
+dgt 0
+swp acc opt
+
+mov 0 acc
+
+tcp own 1
++ jmp r
+- jmp s
+
+# You picked paper
+inc pap
+
+teq opt 0
++ inc drw
+teq opt 1
++ inc win
+
+jmp skip
+
+r: # You picked rock
+	inc roc
+	teq opt 1
+	+ inc drw
+	teq opt 2
+	+ inc win
+	jmp skip
+
+s: # You picked scissors
+	inc sci
+	teq opt 2
+	+ inc drw
+	teq opt 0
+	+ inc win
+
+skip:
+	nop
