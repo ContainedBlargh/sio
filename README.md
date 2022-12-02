@@ -11,8 +11,10 @@ $x0 # What's this?
 # - It's a way to declare your own registers, if you need them. 
 # This one refers to an XBus channel x0.
 
-$dat # This is another register. Registers that don't start with p or x are considered *plain registers*.
-# Registers that start with p refer to *power channels*, XBus- and Power channels can be used to send data between SIO-files (nodes).
+$dat # This is another register. 
+# Registers that don't start with p or x are considered *plain registers*.
+# Registers that start with p refer to *power channels*, 
+# XBus- and Power channels can be used to send data between SIO-files (nodes).
 
 #run this once
 @mov 100 acc
@@ -83,7 +85,7 @@ However, It's uncertain if graphical sio applications work with the native build
 ![SIO's `gfx` register in action](drawing.gif)
 
 I found a raster-graphics-extension for SIO on a now-defunct meme forum, 
-one of the users were using it as the background for the avatar.
+one of the users was using it as the background for their avatar.
 It's interesting to play with, so I've merged it into the existing code. 
 It's using the state-of-the-art Java Abstract Window Toolkit (AWT) to render graphics, 
 so it should be available for graphics-enabled Java installations.
