@@ -184,7 +184,7 @@ sealed class Value {
         }
 
         override fun dgt(i: Int): Value {
-            return SValue("${s[i]}")
+            return SValue(s.getOrNull(i)?.toString() ?: "")
         }
 
         override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.asString()))
@@ -210,7 +210,7 @@ sealed class Value {
             return IValue(if (f.toInt() != 0) 0 else 100)
         }
 
-        override fun dgt(i: Int): Value = IValue(f.toInt().toString()[i].digitToInt())
+        override fun dgt(i: Int): Value = IValue(f.toInt().toString().getOrNull(i)?.digitToInt() ?: 0)
 
         override fun dst(i: Int, v: Value): Value =
             IValue(setDigit(toInt(), i, v.toInt()))
@@ -231,7 +231,7 @@ sealed class Value {
             return IValue(if (i == 0) 100 else 0)
         }
 
-        override fun dgt(i: Int): Value = IValue(this.i.toString()[i].digitToInt())
+        override fun dgt(i: Int): Value = IValue(this.i.toString().getOrNull(i)?.digitToInt() ?: 0)
 
         override fun dst(i: Int, v: Value): Value = IValue(setDigit(this.i, i, v.toInt()))
 
