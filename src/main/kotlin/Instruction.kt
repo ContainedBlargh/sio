@@ -85,6 +85,26 @@ sealed class Instruction {
         }
     }
 
+    data class Inc(private val ref: Value) : Instruction() {
+        override suspend fun modify(executable: Executable) {
+            if (ref !is RegisterRef) {
+                throw IllegalArgumentException("Cannot increment a non-register!")
+            }
+            val next = ref.lookup() + IValue(1)
+            ref.register.put(next)
+        }
+    }
+
+    data class Dec(private val ref: Value) : Instruction() {
+        override suspend fun modify(executable: Executable) {
+            if (ref !is RegisterRef) {
+                throw IllegalArgumentException("Cannot decrement a non-register!")
+            }
+            val next = ref.lookup() - IValue(1)
+            ref.register.put(next)
+        }
+    }
+
     abstract class AccInstruction : Instruction() {
         abstract fun updateAcc(acc: Register.PlainRegister)
         override suspend fun modify(executable: Executable) {
@@ -167,28 +187,6 @@ sealed class Instruction {
                 }
             }
             update(type)
-        }
-    }
-
-    class Inc(val ref: Value) : AccInstruction() {
-        override fun updateAcc(acc: Register.PlainRegister) {
-            if (ref !is RegisterRef) {
-                throw IllegalArgumentException("Cannot increment a non-register!")
-            }
-            val next = ref.lookup() + IValue(1)
-            acc.put(next)
-            ref.register.put(next)
-        }
-    }
-
-    class Dec(val ref: Value) : AccInstruction() {
-        override fun updateAcc(acc: Register.PlainRegister) {
-            if (ref !is RegisterRef) {
-                throw IllegalArgumentException("Cannot decrement a non-register!")
-            }
-            val next = ref.lookup() - IValue(1)
-            acc.put(next)
-            ref.register.put(next)
         }
     }
 
