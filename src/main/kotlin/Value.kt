@@ -226,7 +226,7 @@ sealed class Value {
         override fun plus(value: Value) = IValue(i + value.toInt())
         override fun minus(value: Value) = IValue(i - value.toInt())
         override fun times(value: Value) = IValue(i * value.toInt())
-        override fun div(value: Value) = IValue(i * value.toInt())
+        override fun div(value: Value) = IValue(i / value.toInt())
         override fun not(): Value {
             return IValue(if (i == 0) 100 else 0)
         }
