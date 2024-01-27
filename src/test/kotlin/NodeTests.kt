@@ -100,4 +100,14 @@ class NodeTests {
             runBlocking { job.join() }
         }
     }
+
+    @Test
+    fun `Test input`() {
+        val input = Files.newInputStream(Paths.get(getResourceFilePath("input_test.txt")))
+        System.setIn(input)
+        val inputReader = Parser.parseFromPath(getResourceFilePath("input.sio"))
+        runBlocking {
+            inputReader.start().join()
+        }
+    }
 }

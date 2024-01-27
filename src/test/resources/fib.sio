@@ -39,3 +39,4 @@ loop:                       # for (i = 2; i <= n; i++)
 ret:
     mov a stdout
     mov "\n" stdout
+

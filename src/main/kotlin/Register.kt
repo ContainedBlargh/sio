@@ -248,7 +248,9 @@ sealed class Register {
                         break
                     }
                     if (buffer.contentEquals(patternArr)) {
+                        outBuffer.append(buffer.slice(0 until read).toCharArray())
                         reader.reset()
+                        reader.read(buffer)
                         break
                     }
                     outBuffer.append(buffer.slice(0 until read).toCharArray())
@@ -287,6 +289,8 @@ sealed class Register {
     }
 
     class GfxRegister(
+        private val wSizeRegister: PlainRegister,
+        private val hSizeRegister: PlainRegister,
         private val xSizeRegister: PlainRegister,
         private val ySizeRegister: PlainRegister,
         private val pixelsOffset: OffsetRegister,
@@ -359,8 +363,10 @@ sealed class Register {
                     if (raster == null) {
                         val x = xSizeRegister.get().toInt()
                         val y = ySizeRegister.get().toInt()
+                        val w = wSizeRegister.get().toInt()
+                        val h = hSizeRegister.get().toInt()
                         pixelsMemory.resize(x * y)
-                        val r = Raster(x, y)
+                        val r = Raster(x, y, w, h)
                         r.isVisible = true
                         r.addKeyListener(object : KeyListener {
                             override fun keyTyped(e: KeyEvent?) {

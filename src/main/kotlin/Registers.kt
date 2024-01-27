@@ -16,6 +16,8 @@ object Registers {
         //Add graphics registers...
         val width = 800
         val height = 600
+        val w = Register.PlainRegister("wsz", Value.IValue(width))
+        val h = Register.PlainRegister("hsz", Value.IValue(height))
         val x = Register.PlainRegister("xsz", Value.IValue(width))
         val y = Register.PlainRegister("ysz", Value.IValue(height))
         val pixelsOffset = Register.OffsetRegister("&pxl")
@@ -23,12 +25,14 @@ object Registers {
         val keyboardChannel = PowerChannel()
         val keyboardPinRegister = Register.PinRegister("kb0", keyboardChannel)
         return listOf(
+            w,
+            h,
             x,
             y,
             pixelsOffset,
             pixelsMemory,
             keyboardPinRegister,
-            Register.GfxRegister(x, y, pixelsOffset, pixelsMemory, keyboardChannel)
+            Register.GfxRegister(w, h, x, y, pixelsOffset, pixelsMemory, keyboardChannel)
         )
     }
 }

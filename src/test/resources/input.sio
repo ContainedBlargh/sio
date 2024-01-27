@@ -1,0 +1,20 @@
+options:
+    mov "Please select one of the following options:\n" stdout
+    mov "1. A\n" stdout
+    mov "2. B\n> " stdout
+options2:
+    mov "\n" stdin
+    mov stdin acc
+    cst "i"
+    teq acc 1
+    + jmp success
+    teq acc 2
+    + jmp success
+    mov "\nTry again, idiot.\n" stdout
+    mov "\n" stdin
+    jmp options2
+
+success:
+
+mov "Good, you managed to read the instructions.\n" stdout
+end

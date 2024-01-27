@@ -3,7 +3,8 @@ $mvn
 
 $ptr # Pointer 	color.
 $trl # Trail color 	1.
-$blk # black 2.
+$del # black 2.
+*clrs[6] # Add 6 amazing colours
 
 @mov 985 clk # Set clock to 985 Hz
 @mov 45 xsz
@@ -16,13 +17,31 @@ $blk # black 2.
 @mov 787 acc
 @mov acc &pxl
 
-# Setup color.
+# Setup colors.
 @mov "#FFFFFF" ptr
 @mov "#A1A1A1" trl
-@mov "#000000" blk
+@mov "#000000" del
 
-@mov ptr *pxl
+@mov 0 &clrs
+@mov "#A1A1A1" *clrs
+@mov 1 &clrs
+@mov "#FFB3B3" *clrs
+@mov 2 &clrs
+@mov "#B3FFCC" *clrs
+@mov 3 &clrs
+@mov "#B3E0FF" *clrs
+@mov 4 &clrs
+@mov "#E0B3FF" *clrs
+@mov 5 &clrs
+@mov "#FFF3B3" *clrs
+@mov 0 &clrs
+
+@mov ptr *pxl #The current position is always displayed as white.
 @mov 0 gfx
+
+mov 0 &pxl
+mov *clrs *pxl
+mov acc &pxl
 
 mov kb0 dat
 teq dat null
@@ -51,14 +70,23 @@ teq dat 40 #DOWN
 + mov 45 mvn
 + jmp move
 
+teq dat 68 # D - switch to deletion
++ mov del trl
++ jmp fin
++ slp 60
+
 teq dat 67 # C - change color
-+ swp trl blk
++ inc &clrs
++ mov *clrs trl
 + jmp fin
 + slp 60 # Sleep to avoid swapping multiple times.
 
-mov "unknown keypress: " stdout
-mov dat stdout
-mov "\n" stdout
+teq dat 83 # S - Save the file to stderr
++ jmp save
+
+mov "unknown keypress: " stderr
+mov dat stderr
+mov "\n" stderr
 
 jmp fin
 
@@ -68,6 +96,38 @@ move:
 	add mvn
 	mov acc &pxl
 	mov ptr *pxl
+
+jmp fin
+
+save: # Save our image.
+    mov -1 clk
+    mov acc dat # Save acc for later
+    mov "P3\n" stdout
+    mov xsz stdout
+    mov " " stdout
+    mov ysz stdout
+    mov "\n" stdout
+    mov 0 &pxl
+    mov xsz acc
+    mul ysz
+
+    loop:
+        inc &pxl
+        mov *pxl ptr
+        swp ptr acc
+        cst "i"
+        swp ptr acc
+        teq ptr null
+        + mov "0" stdout
+        - mov ptr stdout
+        mov "\n" stdout
+        dec acc
+        tlt acc 0
+        - jmp loop
+
+    mov dat acc
+    mov 985 clk
+    mov *clrs ptr
 
 fin:
 	mov 0 gfx

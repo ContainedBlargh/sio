@@ -1,0 +1,39 @@
+# A program that computes factorial, written and commented entirely by openai's ChatGPT
+$a  # variable to store the current factorial value
+$b  # unused variable
+$c  # unused variable
+$i  # variable to store the current iteration number
+$n  # variable to store the user-provided number
+
+@mov -1 clk  # clock initialization (unclear what this does)
+mov 1 i      # initialize i to 1
+mov 1 a      # initialize a to 1
+mov 0 b      # initialize b to 0 (unused)
+mov 0 c      # initialize c to 0 (unused)
+
+@mov "Type a number x to run fact(x) or type 'quit' to quit\n" stdout  # print a prompt for the user
+mov "> " stdout  # print a ">" character as the input prompt
+
+mov 5 stdin  # assume the user input is 5 (this can be changed)
+mov stdin acc  # store the user input in the accumulator
+teq acc "quit\n"  # check if the user input was "quit"
++ end  # if the user input was "quit", end the program
+cst 0  # convert the user input to a number (if it isn't already)
+mov acc n  # store the number in the n variable
+teq n 0  # check if the number is 0
++ jmp ret  # if the number is 0, jump to the "ret" label
+
+loop:  # label for the loop
+    tgt i n  # check if i > n
+    + jmp ret  # if i > n, jump to the "ret" label
+    mov a acc  # move the value of a to the accumulator
+    mul i  # multiply the accumulator by i (to compute the factorial)
+    mov acc a  # store the result in the a variable
+    mov i acc  # move the value of i to the accumulator
+    add 1  # increment the accumulator by 1
+    mov acc i  # store the result in the i variable
+    jmp loop  # jump to the "loop" label to continue the loop
+
+ret:  # label for the end of the program
+    mov a stdout  # print the final factorial value
+    mov "\n" stdout  # print a newline character

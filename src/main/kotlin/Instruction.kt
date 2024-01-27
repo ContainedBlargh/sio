@@ -14,6 +14,7 @@ sealed class Instruction {
     object End : Instruction() {
         override suspend fun modify(executable: Executable) {
             executable.stop()
+            System.exit(0);
         }
     }
 
@@ -176,7 +177,31 @@ sealed class Instruction {
                             val radix = str.toInt()
                             acc.put(IValue(acc.get().asString().toInt(radix)))
                         }.getOrNull() ?: throw IllegalArgumentException("Invalid cast: '${givenType.asString()}'")
-
+                        givenType.s == "rgb" -> acc.get().let {
+                            when (it) {
+                                is SValue -> if (it.s.startsWith("#")) {
+                                    val r = it.s.drop(1).take(2).toInt(16)
+                                    val g = it.s.drop(3).take(2).toInt(16)
+                                    val b = it.s.drop(5).take(2).toInt(16)
+                                    acc.put(SValue("$r $g $b"))
+                                }
+                                is IValue -> run {
+                                    val c = it.i
+                                    val r = (c shr 16 and 0xff) / 255
+                                    val g = (c shr 8 and 0xff) / 255
+                                    val b = (c and 0xff) / 255
+                                    acc.put(SValue("$r $g $b"))
+                                }
+                                is FValue -> run {
+                                    val c = it.f;
+                                    if (c >= 0.0 && c <= 1.0) {
+                                        val v = (c * 255).toInt()
+                                        acc.put(SValue("$v $v $v"))
+                                    }
+                                }
+                                else -> acc.put(SValue("0 0 0"))
+                            }
+                        }
                         else -> acc.put(SValue(acc.get().asString()))
                     }
 

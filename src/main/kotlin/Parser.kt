@@ -208,7 +208,7 @@ object Parser {
     private val xBusExp = Regex("^\\$(x[0-9]+)\\s?(.*)\$")
     private val registerExp = Regex("^\\$([a-zA-Z0-9]+)\\s?(.*)\$")
     private val memoryExp = Regex("^[*&]([a-zA-Z0-9]+)(?:\\[(\\d+)\\])?\\s?(.*)$")
-    private val labelExp = Regex("^([a-zA-Z_\\-]+[a-zA-Z0-9_\\-]*):\\s*(.*)\$")
+    private val labelExp = Regex("^\\s*([a-zA-Z_\\-]+[a-zA-Z0-9_\\-]*):\\s*(.*)\$")
     private val tokenExp = Regex("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
     fun parseLines(registers: MutableMap<String, Register>, vararg lines: String): List<Pair<Boolean, Instruction>> {
