@@ -180,9 +180,9 @@ sealed class Instruction {
                         givenType.s == "rgb" -> acc.get().let {
                             when (it) {
                                 is SValue -> if (it.s.startsWith("#")) {
-                                    val r = it.s.drop(1).take(2).toInt(16)
-                                    val g = it.s.drop(3).take(2).toInt(16)
-                                    val b = it.s.drop(5).take(2).toInt(16)
+                                    val r = it.s.slice(1..2).toInt(16)
+                                    val g = it.s.slice(3..4).toInt(16)
+                                    val b = it.s.slice(5..6).toInt(16)
                                     acc.put(SValue("$r $g $b"))
                                 }
                                 is IValue -> run {

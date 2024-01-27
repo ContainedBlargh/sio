@@ -1,5 +1,5 @@
-$dat
-$mvn
+$dat # The traditional dat register, used for various things.
+$mvn # Movement variable.
 
 $ptr # Pointer 	color.
 $trl # Trail color 	1.
@@ -18,7 +18,7 @@ $del # black 2.
 @mov acc &pxl
 
 # Setup colors.
-@mov "#FFFFFF" ptr
+mov "#FFFFFF" ptr
 @mov "#A1A1A1" trl
 @mov "#000000" del
 
@@ -53,6 +53,30 @@ teq dat 122 #F11
 
 teq dat 27 #ESC
 + end
+
+teq dat 16 # SHIFT - speed up!
++ swp acc mvn
++ mov clk acc
++ add 100
++ mov acc clk
++ swp acc mvn
++ mov "clk: " stderr
++ mov clk stderr
++ mov "\n" stderr
++ slp 5
++ jmp fin
+
+teq dat 17 # CTRL - slow down!
++ swp acc mvn
++ mov clk acc
++ sub 100
++ mov acc clk
++ swp acc mvn
++ mov "clk: " stderr
++ mov clk stderr
++ mov "\n" stderr
++ slp 5
++ jmp fin
 
 teq dat 37 #LEFT
 + mov -1 mvn
@@ -99,33 +123,39 @@ move:
 
 jmp fin
 
-save: # Save our image.
+save: # Save the image.
+    mov "Saving pixels to stdout as PPM... " stderr
     mov -1 clk
-    mov acc dat # Save acc for later
+    mov acc mvn
     mov "P3\n" stdout
     mov xsz stdout
     mov " " stdout
     mov ysz stdout
-    mov "\n" stdout
+    mov "\n255\n" stdout
     mov 0 &pxl
     mov xsz acc
     mul ysz
-
+    sub 1
+    mov acc dat
+    mov 0 acc
     loop:
+        tlt acc dat
+        - jmp done
         inc &pxl
         mov *pxl ptr
         swp ptr acc
-        cst "i"
-        swp ptr acc
-        teq ptr null
-        + mov "0" stdout
-        - mov ptr stdout
+        cst "rgb"
+        swp acc ptr
+        mov ptr stdout
         mov "\n" stdout
-        dec acc
-        tlt acc 0
-        - jmp loop
+        inc acc
+        jmp loop
 
-    mov dat acc
+    done:
+        nop    
+    mov "done!\n" stderr
+    # Restore vars
+    mov mvn acc 
     mov 985 clk
     mov *clrs ptr
 
