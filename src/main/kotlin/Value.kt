@@ -2,6 +2,7 @@ import java.util.*
 import kotlin.experimental.inv
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 sealed class Value {
     companion object {
@@ -136,19 +137,16 @@ sealed class Value {
             }
         }
 
-        override fun minus(value: Value): Value {
-            return when (value) {
-                is RegisterRef -> this.minus(value.flatten())
-                is SValue -> SValue(s.replace(value.s, ""))
-                is FValue -> String.format("%f.1", value.f).split(".").sorted().let {
-                    val l = max(it.first().toInt(), s.length - 1)
-                    val r = max(it.last().toInt(), s.length)
-                    SValue(s.slice(l until r))
-                }
-
-                is IValue -> SValue(s.slice(0 until min(value.i, s.length)))
-                is NullValue -> this
+        override fun minus(value: Value): Value = when (value) {
+            is RegisterRef -> this.minus(value.flatten())
+            is SValue -> SValue(s.replace(value.s, ""))
+            is FValue -> String.format("%f.1", value.f).split(".").sorted().let {
+                val l = max(it.first().toInt(), s.length - 1)
+                val r = max(it.last().toInt(), s.length)
+                SValue(s.slice(l until r))
             }
+            is IValue -> SValue(s.slice(0 until min(value.i, s.length)))
+            is NullValue -> this
         }
 
         private fun scale(s: String, f: Float): String {
@@ -164,28 +162,36 @@ sealed class Value {
             return builder.toString()
         }
 
-        override fun times(value: Value): Value {
-            return when (value) {
-                is RegisterRef -> this.times(value.flatten())
-                is SValue -> SValue(s.toCharArray().flatMap { i -> value.s.toCharArray().map { j -> "$i$j" } }
-                    .fold("", String::plus))
-
-                is FValue -> SValue(scale(s, value.f))
-                is IValue -> SValue(s.repeat(value.i))
-                is NullValue -> SValue("")
-            }
-        }
-
-        override fun div(value: Value): Value = this
-
-        override fun not(): Value {
-            return SValue(s.toCharArray().map { it.code.toByte().inv() }.map { it.toInt().toChar() }
+        override fun times(value: Value): Value = when (value) {
+            is RegisterRef -> this.times(value.flatten())
+            is SValue -> SValue(s.toCharArray().flatMap { i -> value.s.toCharArray().map { j -> "$i$j" } }
                 .fold("", String::plus))
+
+            is FValue -> SValue(scale(s, value.f))
+            is IValue -> SValue(s.repeat(value.i))
+            is NullValue -> SValue("")
         }
 
-        override fun dgt(i: Int): Value {
-            return SValue(s.getOrNull(i)?.toString() ?: "")
+        override fun div(value: Value): Value = when (value) {
+            is RegisterRef -> this.div(value.flatten())
+            is FValue -> SValue(scale(s, value.f.pow(-1)))
+            is IValue -> SValue(scale(s, value.i.toFloat().pow(-1)))
+            is NullValue -> SValue("NaN")
+            is SValue -> s.toCharArray()
+                .toList()
+                .chunked(value.s.length)
+                .mapNotNull { it.firstOrNull() }
+                .fold("", String::plus)
+                .let { SValue(it) }
         }
+
+        override fun not(): Value = s.toCharArray()
+            .map { it.code.toByte().inv() }
+            .map { it.toInt().toChar() }
+            .fold("", String::plus)
+            .let { SValue(it) }
+
+        override fun dgt(i: Int): Value = SValue(s.getOrNull(i)?.toString() ?: "")
 
         override fun dst(i: Int, v: Value): Value = SValue(s.replaceAt(i, v.asString()))
 
